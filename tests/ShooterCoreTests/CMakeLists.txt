@@ -3,6 +3,7 @@ add_executable(ShooterCoreTests
     TestCollisionSolver.cpp
     TestHitbox.cpp
     TestTileMap.cpp
+    TestTransformSystem.cpp
     TestTypes.cpp
 )
 

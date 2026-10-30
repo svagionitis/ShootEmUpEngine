@@ -21,5 +21,6 @@ void runTypeTests() noexcept;
 void runHitboxTests() noexcept;
 void runTileMapTests() noexcept;
 void runCollisionTests() noexcept;
+void runTransformTests() noexcept;
 
 } // namespace ShooterCore::Test

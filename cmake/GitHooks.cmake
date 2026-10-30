@@ -6,6 +6,19 @@ find_program(CLANG_FORMAT_BIN
     DOC "Path to clang-format executable"
 )
 
+# Discover Python 3 for repository verification scripts
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_FOUND)
+    set(PYTHON_CMD "${Python3_EXECUTABLE}")
+else()
+    find_program(PYTHON_BIN NAMES python3 python py DOC "Path to python interpreter")
+    if(PYTHON_BIN)
+        set(PYTHON_CMD "${PYTHON_BIN}")
+    else()
+        set(PYTHON_CMD "python3")
+    endif()
+endif()
+
 # Collect all project C++ headers and source files for repository-wide format targets
 file(GLOB_RECURSE PROJECT_FORMAT_FILES
     LIST_DIRECTORIES false

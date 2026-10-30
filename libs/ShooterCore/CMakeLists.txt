@@ -2,6 +2,7 @@ add_library(ShooterCore STATIC
     CollisionSolver.cpp
     Hitbox.cpp
     TileMap.cpp
+    TransformSystem.cpp
 )
 
 target_include_directories(ShooterCore PUBLIC

@@ -10,6 +10,36 @@ namespace ShooterCore {
 /// @brief Mechanical configuration of the player craft.
 enum class TransformMode : std::uint8_t { Robot = 0U, Jet = 1U, TransformingToRobot = 2U, TransformingToJet = 3U };
 
+/// @brief Result codes returned by transformation requests.
+enum class TransformResult : std::uint8_t { Success = 0U, RejectedObstruction = 1U, AlreadyInState = 2U, Busy = 3U };
+
+/// @brief Geometric anchor mode used to project hitboxes during transformation.
+enum class AnchorMode : std::uint8_t { BottomCenter = 0U, Center = 1U, TopLeft = 2U };
+
+/// @class DeltaTime
+/// @brief Strongly-typed simulation timestep duration in seconds.
+class DeltaTime final {
+public:
+    constexpr DeltaTime() noexcept = default;
+
+    /// @brief Construct delta time in seconds, clamped to non-negative values.
+    /// @param[in] seconds Timestep duration.
+    explicit constexpr DeltaTime(float seconds) noexcept
+        : seconds_ { seconds > 0.0f ? seconds : 0.0f }
+    {
+    }
+
+    /// @brief Get duration in seconds.
+    /// @return Non-negative seconds value.
+    [[nodiscard]] constexpr float seconds() const noexcept
+    {
+        return seconds_;
+    }
+
+private:
+    float seconds_ { 0.0f };
+};
+
 /// @class EnergyPoints
 /// @brief Strongly-typed player energy pool value object.
 /// @details Represents the single energy pool used for lasers, shields, and life.
