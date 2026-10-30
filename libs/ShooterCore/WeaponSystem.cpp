@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <array>
 
+#include <glog/logging.h>
+
 #include "CollisionSolver.h"
 #include "Hitbox.h"
 #include "TileMap.h"
@@ -246,8 +248,11 @@ bool WeaponSystem::absorbImpact(DamageValue damage, EnergyPoints& energy) noexce
     const std::uint16_t cost { damage.value() };
     energy.deduct(EnergyPoints { cost });
 
+    LOG(INFO) << "WeaponSystem: Energy barrier absorbed " << cost << " damage points.";
+
     if (energy.isDepleted()) {
         shieldActive_ = false;
+        LOG(WARNING) << "WeaponSystem: Energy barrier collapsed due to energy exhaustion.";
     }
 
     return true;

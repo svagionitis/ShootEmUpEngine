@@ -10,6 +10,8 @@ add_executable(SdlAdapterTests
 target_link_libraries(SdlAdapterTests PRIVATE
     SdlAdapter
     ShooterCore
+    GTest::gtest
+    glog::glog
     $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
 )
 
@@ -21,11 +23,14 @@ target_include_directories(SdlAdapterTests PRIVATE
 
 apply_compiler_flags(SdlAdapterTests)
 
-# Copy SDL2 runtime DLL on Windows
-if(WIN32 AND TARGET SDL2::SDL2)
+# Copy runtime DLLs on Windows
+if(WIN32)
     add_custom_command(TARGET SdlAdapterTests POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:SDL2::SDL2>
+            $<TARGET_FILE:glog::glog>
+            $<TARGET_FILE:gflags::gflags>
+            $<TARGET_FILE:GTest::gtest>
             $<TARGET_FILE_DIR:SdlAdapterTests>
     )
 endif()

@@ -10,6 +10,7 @@
 #include <utility>
 
 #include <SDL.h>
+#include <glog/logging.h>
 
 #include "AudioCommandQueue.h"
 #include "Types.h"
@@ -97,7 +98,9 @@ bool SdlAudio::init() noexcept
 {
     shutdown();
 
+    LOG(INFO) << "SdlAudio: Initializing audio subsystem (44.1 kHz stereo)...";
     if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
+        LOG(ERROR) << "SdlAudio: Failed to initialize audio: " << SDL_GetError();
         return false;
     }
     audioInitialized_ = true;
@@ -113,10 +116,12 @@ bool SdlAudio::init() noexcept
     SDL_AudioSpec obtained { };
     deviceId_ = SDL_OpenAudioDevice(nullptr, 0, &wanted, &obtained, 0);
     if (deviceId_ == 0U) {
+        LOG(ERROR) << "SdlAudio: Failed to open audio device: " << SDL_GetError();
         shutdown();
         return false;
     }
 
+    LOG(INFO) << "SdlAudio: Audio device opened successfully (ID: " << deviceId_ << ").";
     SDL_PauseAudioDevice(deviceId_, 0);
     return true;
 }
@@ -131,6 +136,7 @@ void SdlAudio::shutdown() noexcept
     if (audioInitialized_) {
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
         audioInitialized_ = false;
+        LOG(INFO) << "SdlAudio: Audio subsystem released.";
     }
 }
 

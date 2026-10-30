@@ -9,6 +9,7 @@
 #include <utility>
 
 #include <SDL.h>
+#include <glog/logging.h>
 
 namespace SdlAdapter {
 
@@ -46,7 +47,9 @@ bool SdlWindow::init(const WindowConfig& config) noexcept
 {
     shutdown();
 
+    LOG(INFO) << "SdlWindow: Initializing video subsystem...";
     if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
+        LOG(ERROR) << "SdlWindow: Failed to initialize video: " << SDL_GetError();
         return false;
     }
     videoInitialized_ = true;
@@ -70,6 +73,7 @@ bool SdlWindow::init(const WindowConfig& config) noexcept
         config.windowHeight, winFlags);
 
     if (window_ == nullptr) {
+        LOG(ERROR) << "SdlWindow: Failed to create window: " << SDL_GetError();
         shutdown();
         return false;
     }
@@ -86,6 +90,7 @@ bool SdlWindow::init(const WindowConfig& config) noexcept
     }
 
     if (renderer_ == nullptr) {
+        LOG(ERROR) << "SdlWindow: Failed to create renderer: " << SDL_GetError();
         shutdown();
         return false;
     }
@@ -93,6 +98,9 @@ bool SdlWindow::init(const WindowConfig& config) noexcept
     if (config.logicalWidth > 0 && config.logicalHeight > 0) {
         (void)SDL_RenderSetLogicalSize(renderer_, config.logicalWidth, config.logicalHeight);
     }
+
+    LOG(INFO) << "SdlWindow: Created window and renderer (" << config.windowWidth << "x" << config.windowHeight
+              << ", logical: " << config.logicalWidth << "x" << config.logicalHeight << ").";
 
     return true;
 }
@@ -112,6 +120,7 @@ void SdlWindow::shutdown() noexcept
     if (videoInitialized_) {
         SDL_QuitSubSystem(SDL_INIT_VIDEO);
         videoInitialized_ = false;
+        LOG(INFO) << "SdlWindow: Video subsystem released.";
     }
 }
 

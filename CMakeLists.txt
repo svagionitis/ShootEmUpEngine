@@ -14,12 +14,16 @@ include(cmake/GitHooks.cmake)
 # Options
 option(BUILD_TESTING "Build the automated test suite" ON)
 
-# Discovery path for SDL2
+# Discovery path for vcpkg packages
 if(EXISTS "C:/vcpkg/installed/x64-windows")
     list(APPEND CMAKE_PREFIX_PATH "C:/vcpkg/installed/x64-windows")
 endif()
 
 find_package(SDL2 CONFIG REQUIRED)
+set(GFLAGS_USE_TARGET_NAMESPACE ON)
+find_package(gflags CONFIG REQUIRED)
+find_package(glog CONFIG REQUIRED)
+find_package(GTest CONFIG REQUIRED)
 
 # Tier 1: Core Engine Library (Strictly zero external dependencies)
 add_subdirectory(libs/ShooterCore)

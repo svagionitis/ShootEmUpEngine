@@ -3,88 +3,90 @@
 #include <cstddef>
 #include <cstdint>
 
-#include <chrono>
 #include <iostream>
+#include <string>
 #include <string_view>
 
-namespace {
+#include <glog/logging.h>
+#include <gtest/gtest.h>
 
-struct SuiteEntry {
-    std::string_view name;
-    void (*runner)() noexcept;
-    bool isSoak;
-};
+TEST(ShooterCoreTests, Types)
+{
+    ShooterCore::Test::runTypeTests();
+}
 
-const SuiteEntry kSuites[] = { { "Types", &ShooterCore::Test::runTypeTests, false },
-    { "Hitbox", &ShooterCore::Test::runHitboxTests, false }, { "TileMap", &ShooterCore::Test::runTileMapTests, false },
-    { "CollisionSolver", &ShooterCore::Test::runCollisionTests, false },
-    { "TransformSystem", &ShooterCore::Test::runTransformTests, false },
-    { "WeaponSystem", &ShooterCore::Test::runWeaponTests, false },
-    { "ShieldSystem", &ShooterCore::Test::runShieldTests, false },
-    { "EngineInput", &ShooterCore::Test::runEngineInputTests, false },
-    { "CommandQueues", &ShooterCore::Test::runCommandQueueTests, false },
-    { "EntityPool", &ShooterCore::Test::runEntityPoolTests, false },
-    { "GameEngine", &ShooterCore::Test::runGameEngineTests, false },
-    { "DeterminismSoak", &ShooterCore::Test::runDeterminismSoakTests, true } };
+TEST(ShooterCoreTests, Hitbox)
+{
+    ShooterCore::Test::runHitboxTests();
+}
 
-} // namespace
+TEST(ShooterCoreTests, TileMap)
+{
+    ShooterCore::Test::runTileMapTests();
+}
+
+TEST(ShooterCoreTests, CollisionSolver)
+{
+    ShooterCore::Test::runCollisionTests();
+}
+
+TEST(ShooterCoreTests, TransformSystem)
+{
+    ShooterCore::Test::runTransformTests();
+}
+
+TEST(ShooterCoreTests, WeaponSystem)
+{
+    ShooterCore::Test::runWeaponTests();
+}
+
+TEST(ShooterCoreTests, ShieldSystem)
+{
+    ShooterCore::Test::runShieldTests();
+}
+
+TEST(ShooterCoreTests, EngineInput)
+{
+    ShooterCore::Test::runEngineInputTests();
+}
+
+TEST(ShooterCoreTests, CommandQueues)
+{
+    ShooterCore::Test::runCommandQueueTests();
+}
+
+TEST(ShooterCoreTests, EntityPool)
+{
+    ShooterCore::Test::runEntityPoolTests();
+}
+
+TEST(ShooterCoreTests, GameEngine)
+{
+    ShooterCore::Test::runGameEngineTests();
+}
+
+TEST(ShooterCoreTests, DeterminismSoak)
+{
+    ShooterCore::Test::runDeterminismSoakTests();
+}
 
 int main(int argc, char* argv[])
 {
-    std::string_view targetSuite { };
-    bool runSoak { false };
+    google::InitGoogleLogging(argv[0]);
+    FLAGS_logtostderr = 1;
 
+    LOG(INFO) << "Starting ShooterCore GoogleTest & GLog Suite...";
+    testing::InitGoogleTest(&argc, argv);
+
+    // Support --suite=<Name> mapping to GoogleTest filter
     for (int i { 1 }; i < argc; ++i) {
         const std::string_view arg { argv[i] };
-        if (arg == "--list") {
-            std::cout << "Available ShooterCore test suites:\n";
-            for (const auto& entry : kSuites) {
-                std::cout << "  - " << entry.name << (entry.isSoak ? " (soak)" : "") << "\n";
-            }
-            return 0;
-        }
-        if (arg == "--soak") {
-            runSoak = true;
-        } else if (arg.rfind("--suite=", 0U) == 0U) {
-            targetSuite = arg.substr(8U);
+        if (arg.rfind("--suite=", 0U) == 0U) {
+            const std::string suiteFilter { std::string("ShooterCoreTests.") + std::string(arg.substr(8U)) };
+            ::testing::GTEST_FLAG(filter) = suiteFilter;
+            LOG(INFO) << "Applied suite filter: " << suiteFilter;
         }
     }
 
-    std::cout << "[INFO] Starting ShooterCore Automated Headless Tests...\n";
-    const auto startTime = std::chrono::high_resolution_clock::now();
-
-    for (const auto& entry : kSuites) {
-        if (!targetSuite.empty() && entry.name != targetSuite) {
-            continue;
-        }
-        if (entry.isSoak && !runSoak && targetSuite != entry.name) {
-            continue;
-        }
-
-        std::cout << "[RUN ] Suite: " << entry.name << "\n";
-        const std::uint32_t failBefore = ShooterCore::Test::gTestStats.failedAssertions;
-
-        entry.runner();
-
-        if (ShooterCore::Test::gTestStats.failedAssertions == failBefore) {
-            std::cout << "[OK  ] Suite: " << entry.name << " passed.\n";
-            ++ShooterCore::Test::gTestStats.passedSuites;
-        } else {
-            std::cerr << "[FAIL] Suite: " << entry.name << " had failures!\n";
-            ++ShooterCore::Test::gTestStats.failedSuites;
-        }
-    }
-
-    const auto endTime = std::chrono::high_resolution_clock::now();
-    const auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
-
-    std::cout << "\n======================================================\n";
-    std::cout << "Test Summary: " << ShooterCore::Test::gTestStats.passedSuites << " suites passed, "
-              << ShooterCore::Test::gTestStats.failedSuites << " suites failed. (" << elapsedMs << " ms total)\n";
-    std::cout << "Assertions:   "
-              << (ShooterCore::Test::gTestStats.totalAssertions - ShooterCore::Test::gTestStats.failedAssertions)
-              << " passed, " << ShooterCore::Test::gTestStats.failedAssertions << " failed.\n";
-    std::cout << "======================================================\n";
-
-    return (ShooterCore::Test::gTestStats.failedAssertions == 0U) ? 0 : 1;
+    return RUN_ALL_TESTS();
 }

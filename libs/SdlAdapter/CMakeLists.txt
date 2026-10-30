@@ -17,6 +17,7 @@ target_include_directories(SdlAdapter PUBLIC
 
 target_link_libraries(SdlAdapter PUBLIC
     ShooterCore
+    glog::glog
     $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
 )
 

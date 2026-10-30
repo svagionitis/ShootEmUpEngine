@@ -5,6 +5,8 @@
 
 #include <algorithm>
 
+#include <glog/logging.h>
+
 #include "Hitbox.h"
 #include "TileMap.h"
 #include "Types.h"
@@ -22,6 +24,7 @@ TransformResult TransformSystem::requestTransform(WorldPos currentPos, const Til
     const Hitbox projected { projectBox(currentPos, mode_, targetMode, anchor) };
 
     if (!map.hasClearance(projected)) {
+        LOG(WARNING) << "TransformSystem: Transformation blocked due to insufficient clearance.";
         return TransformResult::RejectedObstruction;
     }
 
@@ -30,6 +33,9 @@ TransformResult TransformSystem::requestTransform(WorldPos currentPos, const Til
     } else {
         mode_ = TransformMode::TransformingToRobot;
     }
+
+    LOG(INFO) << "TransformSystem: Initiating transformation to "
+              << ((targetMode == TransformMode::Jet) ? "Jet" : "Robot") << " mode.";
 
     transitionTimer_ = 0.0f;
     return TransformResult::Success;
@@ -49,6 +55,8 @@ void TransformSystem::update(DeltaTime dt) noexcept
         } else if (mode_ == TransformMode::TransformingToRobot) {
             mode_ = TransformMode::Robot;
         }
+        LOG(INFO) << "TransformSystem: Transformation complete. Current mode: "
+                  << ((mode_ == TransformMode::Jet) ? "Jet" : "Robot");
         transitionTimer_ = 0.0f;
     }
 }

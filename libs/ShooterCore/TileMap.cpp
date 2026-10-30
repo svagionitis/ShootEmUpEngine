@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <vector>
 
+#include <glog/logging.h>
+
 #include "Hitbox.h"
 #include "Types.h"
 
@@ -102,6 +104,7 @@ bool TileMap::damageTile(TileCoord coord) noexcept
     health_[idx].damage();
     if (health_[idx].isDestroyed()) {
         tiles_[idx] = TileType::Empty;
+        LOG(INFO) << "TileMap: Block eroded and destroyed at (" << coord.col << ", " << coord.row << ").";
         return true;
     }
 
@@ -121,6 +124,7 @@ bool TileMap::destroyTile(TileCoord coord) noexcept
 
     health_[idx] = TileHealth { 0U };
     tiles_[idx] = TileType::Empty;
+    LOG(INFO) << "TileMap: Block destroyed at (" << coord.col << ", " << coord.row << ").";
     return true;
 }
 

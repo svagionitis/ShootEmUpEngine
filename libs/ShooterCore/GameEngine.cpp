@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <array>
 
+#include <glog/logging.h>
+
 #include "CollisionSolver.h"
 #include "Hitbox.h"
 #include "TileMap.h"
@@ -33,6 +35,9 @@ Hitbox GameEngine::computeHitbox(WorldPos pos) const noexcept
 
 void GameEngine::initLevel(const TileMap& map, WorldPos playerSpawn) noexcept
 {
+    LOG(INFO) << "GameEngine: Initializing level with player spawn at (" << playerSpawn.x << ", " << playerSpawn.y
+              << ").";
+
     map_ = map;
     entities_.clear();
     renderQueue_.clear();
@@ -52,7 +57,14 @@ void GameEngine::initLevel(const TileMap& map, WorldPos playerSpawn) noexcept
 
 EntityId GameEngine::spawnEnemy(EntityType type, WorldPos pos, Hitbox bounds, std::uint16_t hp) noexcept
 {
-    return entities_.spawn(type, pos, bounds, hp);
+    const EntityId id { entities_.spawn(type, pos, bounds, hp) };
+    if (id.isValid()) {
+        LOG(INFO) << "GameEngine: Spawned enemy type " << static_cast<unsigned>(type) << " at (" << pos.x << ", "
+                  << pos.y << ") with ID " << id.index() << " (gen " << id.generation() << ").";
+    } else {
+        LOG(WARNING) << "GameEngine: Failed to spawn enemy: Entity pool capacity exhausted.";
+    }
+    return id;
 }
 
 void GameEngine::step(DeltaTime dt, EngineInput input) noexcept
@@ -235,6 +247,7 @@ void GameEngine::updateWeapons(DeltaTime dt, EngineInput input) noexcept
                     slt.data.health = 0U;
                     const EntityId eid { static_cast<std::uint16_t>(slotIdx), slt.generation };
                     entities_.despawn(eid);
+                    LOG(INFO) << "GameEngine: Enemy ID " << eid.index() << " destroyed. Energy replenished (+5).";
                     energy_.replenish(EnergyPoints { 5U });
                     audioQueue_.pushSound(SoundEffectId::EnemyExplode);
                 }

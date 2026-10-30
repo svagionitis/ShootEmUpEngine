@@ -4,6 +4,8 @@ add_library(ShooterCore STATIC
     EntityPool.cpp
     GameEngine.cpp
     Hitbox.cpp
+    Logger.cpp
+    Logger.h
     RenderCommandQueue.cpp
     TileMap.cpp
     TransformSystem.cpp
@@ -12,6 +14,10 @@ add_library(ShooterCore STATIC
 
 target_include_directories(ShooterCore PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(ShooterCore PUBLIC
+    glog::glog
 )
 
 apply_compiler_flags(ShooterCore)
