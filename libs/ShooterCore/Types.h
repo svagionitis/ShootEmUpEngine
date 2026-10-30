@@ -365,4 +365,127 @@ private:
     float accumulator_ { 0.0f };
 };
 
+/// @brief Visual sprite identifier for presentation rendering.
+enum class SpriteId : std::uint16_t {
+    None = 0U,
+    PlayerRobotWalk1 = 1U,
+    PlayerRobotWalk2 = 2U,
+    PlayerRobotJump = 3U,
+    PlayerJet = 4U,
+    PlayerTransforming = 5U,
+    EnemyPatrol = 10U,
+    EnemyFlyer = 11U,
+    EnemyBoss = 12U,
+    SparkParticle = 20U,
+    Explosion = 21U
+};
+
+/// @brief Sound effect identifier for presentation audio playback.
+enum class SoundEffectId : std::uint8_t {
+    None = 0U,
+    LaserFire = 1U,
+    LaserHit = 2U,
+    ShieldDeploy = 3U,
+    ShieldDeflect = 4U,
+    TransformRobot = 5U,
+    TransformJet = 6U,
+    PlayerDamage = 7U,
+    EnemyExplode = 8U,
+    BlockCrumble = 9U,
+    EnergyWarning = 10U
+};
+
+/// @brief Music track identifier for presentation audio stream.
+enum class MusicTrackId : std::uint8_t { None = 0U, MainTheme = 1U, Level1Cavern = 2U, BossBattle = 3U, GameOver = 4U };
+
+/// @brief Entity classification category.
+enum class EntityType : std::uint8_t {
+    None = 0U,
+    Player = 1U,
+    PatrolWalker = 2U,
+    HomingFlyer = 3U,
+    HostileBullet = 4U,
+    Particle = 5U
+};
+
+/// @class EntityId
+/// @brief Generational handle uniquely referencing an active entity slot.
+class EntityId final {
+public:
+    constexpr EntityId() noexcept = default;
+
+    /// @brief Construct an entity generational handle.
+    /// @param[in] idx Array slot index.
+    /// @param[in] gen Generation counter.
+    explicit constexpr EntityId(std::uint16_t idx, std::uint16_t gen) noexcept
+        : index_ { idx }
+        , generation_ { gen }
+    {
+    }
+
+    /// @brief Query internal slot index.
+    /// @return Slot index.
+    [[nodiscard]] constexpr std::uint16_t index() const noexcept
+    {
+        return index_;
+    }
+
+    /// @brief Query generation counter.
+    /// @return Generation counter.
+    [[nodiscard]] constexpr std::uint16_t generation() const noexcept
+    {
+        return generation_;
+    }
+
+    /// @brief Check whether handle references an allocated generation.
+    /// @return true if generation is greater than 0.
+    [[nodiscard]] constexpr bool isValid() const noexcept
+    {
+        return generation_ > 0U;
+    }
+
+    /// @brief Equality comparison.
+    [[nodiscard]] constexpr bool operator==(const EntityId& o) const noexcept
+    {
+        return index_ == o.index_ && generation_ == o.generation_;
+    }
+
+    /// @brief Inequality comparison.
+    [[nodiscard]] constexpr bool operator!=(const EntityId& o) const noexcept
+    {
+        return !(*this == o);
+    }
+
+private:
+    std::uint16_t index_ { 0U };
+    std::uint16_t generation_ { 0U };
+};
+
+/// @struct ColorRgba
+/// @brief 32-bit RGBA color representation for vector beams and HUD elements.
+struct ColorRgba final {
+    std::uint8_t r { 255U };
+    std::uint8_t g { 255U };
+    std::uint8_t b { 255U };
+    std::uint8_t a { 255U };
+
+    [[nodiscard]] constexpr bool operator==(const ColorRgba& o) const noexcept
+    {
+        return r == o.r && g == o.g && b == o.b && a == o.a;
+    }
+
+    [[nodiscard]] constexpr bool operator!=(const ColorRgba& o) const noexcept
+    {
+        return !(*this == o);
+    }
+};
+
+/// @struct CameraViewport
+/// @brief World extents and position of the current view camera.
+struct CameraViewport final {
+    WorldPos pos { 0.0f, 0.0f };
+    float width { 320.0f };
+    float height { 240.0f };
+};
+
 } // namespace ShooterCore

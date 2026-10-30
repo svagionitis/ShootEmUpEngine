@@ -16,6 +16,10 @@ int main()
     ShooterCore::Test::runTransformTests();
     ShooterCore::Test::runWeaponTests();
     ShooterCore::Test::runShieldTests();
+    ShooterCore::Test::runEngineInputTests();
+    ShooterCore::Test::runCommandQueueTests();
+    ShooterCore::Test::runEntityPoolTests();
+    ShooterCore::Test::runGameEngineTests();
 
     if (ShooterCore::Test::gFailureCount == 0U) {
         std::cout << "[PASS] All ShooterCore tests passed successfully.\n";

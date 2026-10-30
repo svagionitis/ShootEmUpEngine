@@ -1,0 +1,109 @@
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+
+#include <array>
+
+#include "Hitbox.h"
+#include "Types.h"
+
+namespace ShooterCore {
+
+/// @brief Tagged render command type discriminator.
+enum class RenderCommandType : std::uint8_t { None = 0U, DrawSprite = 1U, DrawTile = 2U, DrawBeam = 3U, DrawBar = 4U };
+
+/// @struct RenderCommand
+/// @brief Hardware-independent drawing instruction emitted by GameEngine.
+struct RenderCommand final {
+    RenderCommandType type { RenderCommandType::None };
+    SpriteId sprite { SpriteId::None };
+    TileType tileType { TileType::Empty };
+    WorldPos pos { 0.0f, 0.0f };
+    WorldPos endpoint { 0.0f, 0.0f };
+    float width { 0.0f };
+    float height { 0.0f };
+    float fillPct { 0.0f };
+    ColorRgba color { };
+    FacingDirection facing { FacingDirection::Right };
+    std::uint8_t layer { 0U };
+};
+
+/// @class RenderCommandQueue
+/// @brief Zero-heap fixed-capacity buffer storing draw calls for Tier 2 adapters.
+/// @details Capacity is 2048 commands per frame, guaranteeing zero dynamic allocation.
+class RenderCommandQueue final {
+public:
+    static constexpr std::size_t kCapacity { 2048U };
+
+    constexpr RenderCommandQueue() noexcept = default;
+
+    /// @brief Retrieve count of enqueued commands.
+    /// @return Number of commands stored.
+    [[nodiscard]] constexpr std::size_t count() const noexcept
+    {
+        return count_;
+    }
+
+    /// @brief Check whether queue has no stored commands.
+    /// @return true if empty.
+    [[nodiscard]] constexpr bool isEmpty() const noexcept
+    {
+        return count_ == 0U;
+    }
+
+    /// @brief Check whether queue reached maximum capacity.
+    /// @return true if full.
+    [[nodiscard]] constexpr bool isFull() const noexcept
+    {
+        return count_ >= kCapacity;
+    }
+
+    /// @brief Clear all enqueued render commands.
+    constexpr void clear() noexcept
+    {
+        count_ = 0U;
+    }
+
+    /// @brief Retrieve command by index.
+    /// @param[in] idx Array index.
+    /// @return Reference to command at index (or first element if out of bounds).
+    [[nodiscard]] const RenderCommand& get(std::size_t idx) const noexcept;
+
+    /// @brief Push sprite render command.
+    /// @param[in] sprite Sprite graphic identifier.
+    /// @param[in] pos Continuous world position.
+    /// @param[in] facing Horizontal facing orientation.
+    /// @param[in] layer Drawing layer for depth sorting.
+    /// @return true if successfully pushed; false if queue is full.
+    bool pushSprite(SpriteId sprite, WorldPos pos, FacingDirection facing, std::uint8_t layer) noexcept;
+
+    /// @brief Push tile render command.
+    /// @param[in] type Terrain material category.
+    /// @param[in] pos World position of the tile.
+    /// @param[in] layer Drawing layer.
+    /// @return true if successfully pushed; false if queue is full.
+    bool pushTile(TileType type, WorldPos pos, std::uint8_t layer) noexcept;
+
+    /// @brief Push vector laser beam render command.
+    /// @param[in] origin Beam starting position.
+    /// @param[in] endpoint Beam terminating position.
+    /// @param[in] color RGBA color of the beam.
+    /// @return true if successfully pushed; false if queue is full.
+    bool pushBeam(WorldPos origin, WorldPos endpoint, ColorRgba color) noexcept;
+
+    /// @brief Push screen-space HUD bar command.
+    /// @param[in] pos Screen coordinates of bar top-left.
+    /// @param[in] width Total width in pixels.
+    /// @param[in] height Total height in pixels.
+    /// @param[in] pct Normalized fill fraction [0.0, 1.0].
+    /// @param[in] color Fill color.
+    /// @return true if successfully pushed; false if queue is full.
+    bool pushBar(WorldPos pos, float width, float height, float pct, ColorRgba color) noexcept;
+
+private:
+    std::array<RenderCommand, kCapacity> commands_ { };
+    std::size_t count_ { 0U };
+};
+
+} // namespace ShooterCore

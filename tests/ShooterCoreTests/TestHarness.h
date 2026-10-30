@@ -24,5 +24,9 @@ void runCollisionTests() noexcept;
 void runTransformTests() noexcept;
 void runWeaponTests() noexcept;
 void runShieldTests() noexcept;
+void runEngineInputTests() noexcept;
+void runCommandQueueTests() noexcept;
+void runEntityPoolTests() noexcept;
+void runGameEngineTests() noexcept;
 
 } // namespace ShooterCore::Test

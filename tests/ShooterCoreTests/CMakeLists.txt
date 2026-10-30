@@ -1,6 +1,10 @@
 add_executable(ShooterCoreTests
     Main.cpp
     TestCollisionSolver.cpp
+    TestCommandQueues.cpp
+    TestEngineInput.cpp
+    TestEntityPool.cpp
+    TestGameEngine.cpp
     TestHitbox.cpp
     TestShieldSystem.cpp
     TestTileMap.cpp
