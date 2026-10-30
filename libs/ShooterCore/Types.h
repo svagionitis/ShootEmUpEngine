@@ -197,4 +197,81 @@ private:
     std::uint16_t value_ { 0U };
 };
 
+/// @brief Classification of cell materials within the tilemap.
+enum class TileType : std::uint8_t { Empty = 0U, SolidWall = 1U, DestructibleWall = 2U, Hazard = 3U };
+
+/// @class TileHealth
+/// @brief Durability state for destructible obstacle tiles.
+class TileHealth final {
+public:
+    static constexpr std::uint8_t kDefaultMax { 3U };
+
+    /// @brief Construct tile health initialized to maximum durability.
+    constexpr TileHealth() noexcept
+        : hits_ { kDefaultMax }
+    {
+    }
+
+    /// @brief Construct tile health with explicit initial durability.
+    /// @param[in] hits Number of impacts required to destroy.
+    explicit constexpr TileHealth(std::uint8_t hits) noexcept
+        : hits_ { std::min(hits, kDefaultMax) }
+    {
+    }
+
+    /// @brief Get remaining hit points.
+    /// @return Current health in range [0, kDefaultMax].
+    [[nodiscard]] constexpr std::uint8_t value() const noexcept
+    {
+        return hits_;
+    }
+
+    /// @brief Check whether block is completely crumbled.
+    /// @return true if zero hits remain.
+    [[nodiscard]] constexpr bool isDestroyed() const noexcept
+    {
+        return hits_ == 0U;
+    }
+
+    /// @brief Deduct one hit point with underflow protection.
+    constexpr void damage() noexcept
+    {
+        if (hits_ > 0U) {
+            --hits_;
+        }
+    }
+
+    /// @brief Reset durability to default maximum capacity.
+    constexpr void reset() noexcept
+    {
+        hits_ = kDefaultMax;
+    }
+
+    [[nodiscard]] constexpr bool operator==(const TileHealth& other) const noexcept
+    {
+        return hits_ == other.hits_;
+    }
+
+    [[nodiscard]] constexpr bool operator!=(const TileHealth& other) const noexcept
+    {
+        return hits_ != other.hits_;
+    }
+
+private:
+    std::uint8_t hits_ { kDefaultMax };
+};
+
+/// @brief Discrete collision surface normal direction.
+enum class ContactNormal : std::uint8_t { None = 0U, Left = 1U, Right = 2U, Up = 3U, Down = 4U };
+
+/// @struct SweepHit
+/// @brief Result of continuous swept collision detection against geometry.
+struct SweepHit final {
+    bool collided { false };
+    float toi { 1.0f };
+    ContactNormal normal { ContactNormal::None };
+    TileCoord hitTile { 0U, 0U };
+    TileType tileType { TileType::Empty };
+};
+
 } // namespace ShooterCore

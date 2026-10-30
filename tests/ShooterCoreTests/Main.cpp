@@ -11,6 +11,8 @@ int main()
 
     ShooterCore::Test::runTypeTests();
     ShooterCore::Test::runHitboxTests();
+    ShooterCore::Test::runTileMapTests();
+    ShooterCore::Test::runCollisionTests();
 
     if (ShooterCore::Test::gFailureCount == 0U) {
         std::cout << "[PASS] All ShooterCore tests passed successfully.\n";

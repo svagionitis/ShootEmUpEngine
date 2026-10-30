@@ -19,5 +19,7 @@ inline std::uint32_t gFailureCount { 0U };
 
 void runTypeTests() noexcept;
 void runHitboxTests() noexcept;
+void runTileMapTests() noexcept;
+void runCollisionTests() noexcept;
 
 } // namespace ShooterCore::Test
