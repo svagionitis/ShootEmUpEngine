@@ -3,6 +3,7 @@ add_library(ShooterCore STATIC
     Hitbox.cpp
     TileMap.cpp
     TransformSystem.cpp
+    WeaponSystem.cpp
 )
 
 target_include_directories(ShooterCore PUBLIC

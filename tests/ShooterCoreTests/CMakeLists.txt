@@ -2,9 +2,11 @@ add_executable(ShooterCoreTests
     Main.cpp
     TestCollisionSolver.cpp
     TestHitbox.cpp
+    TestShieldSystem.cpp
     TestTileMap.cpp
     TestTransformSystem.cpp
     TestTypes.cpp
+    TestWeaponSystem.cpp
 )
 
 target_link_libraries(ShooterCoreTests PRIVATE

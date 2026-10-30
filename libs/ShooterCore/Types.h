@@ -304,4 +304,65 @@ struct SweepHit final {
     TileType tileType { TileType::Empty };
 };
 
+/// @brief Discrete facing orientation of the player craft.
+enum class FacingDirection : std::uint8_t { Left = 0U, Right = 1U, Up = 2U, Down = 3U };
+
+/// @brief Target category classification for auto-aim priority.
+enum class TargetType : std::uint8_t { Hostile = 0U, Destructible = 1U };
+
+/// @struct BeamSegment
+/// @brief Spatial coordinates and state of the emitted laser beam for rendering.
+struct BeamSegment final {
+    WorldPos origin { 0.0f, 0.0f };
+    WorldPos endpoint { 0.0f, 0.0f };
+    bool lockedToTarget { false };
+    bool active { false };
+    std::uint32_t targetId { 0U };
+};
+
+/// @class DrainAccumulator
+/// @brief Deterministic fractional energy deduction pacer.
+class DrainAccumulator final {
+public:
+    constexpr DrainAccumulator() noexcept = default;
+
+    /// @brief Add fractional consumption based on rate and delta time.
+    /// @param[in] ratePerSecond Energy points consumed per second.
+    /// @param[in] dt Timestep duration in seconds.
+    constexpr void accumulate(float ratePerSecond, float dt) noexcept
+    {
+        if (ratePerSecond > 0.0f && dt > 0.0f) {
+            accumulator_ += ratePerSecond * dt;
+        }
+    }
+
+    /// @brief Extract accrued whole integer energy deductions.
+    /// @return Integer points to deduct from pool.
+    [[nodiscard]] constexpr std::uint16_t consumeWhole() noexcept
+    {
+        if (accumulator_ < 1.0f) {
+            return 0U;
+        }
+        const auto whole { static_cast<std::uint16_t>(accumulator_) };
+        accumulator_ -= static_cast<float>(whole);
+        return whole;
+    }
+
+    /// @brief Reset accrued drain to zero.
+    constexpr void reset() noexcept
+    {
+        accumulator_ = 0.0f;
+    }
+
+    /// @brief Query current fractional accumulation.
+    /// @return Accrued sub-point drain.
+    [[nodiscard]] constexpr float accrued() const noexcept
+    {
+        return accumulator_;
+    }
+
+private:
+    float accumulator_ { 0.0f };
+};
+
 } // namespace ShooterCore
