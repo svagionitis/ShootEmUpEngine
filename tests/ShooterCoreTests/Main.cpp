@@ -5,7 +5,8 @@
 
 #include <iostream>
 
-int main() {
+int main()
+{
     std::cout << "[INFO] Starting ShooterCore Automated Tests...\n";
 
     ShooterCore::Test::runTypeTests();
@@ -16,8 +17,6 @@ int main() {
         return 0;
     }
 
-    std::cerr << "[FAIL] Total failures encountered: "
-              << ShooterCore::Test::gFailureCount << "\n";
+    std::cerr << "[FAIL] Total failures encountered: " << ShooterCore::Test::gFailureCount << "\n";
     return 1;
 }
-
