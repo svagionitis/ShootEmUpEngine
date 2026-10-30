@@ -14,12 +14,23 @@ include(cmake/GitHooks.cmake)
 # Options
 option(BUILD_TESTING "Build the automated test suite" ON)
 
+# Discovery path for SDL2
+if(EXISTS "C:/vcpkg/installed/x64-windows")
+    list(APPEND CMAKE_PREFIX_PATH "C:/vcpkg/installed/x64-windows")
+endif()
+
+find_package(SDL2 CONFIG REQUIRED)
+
 # Tier 1: Core Engine Library (Strictly zero external dependencies)
 add_subdirectory(libs/ShooterCore)
+
+# Tier 2: Platform Presentation Adapter (SDL2)
+add_subdirectory(libs/SdlAdapter)
 
 # Test Suite
 if(BUILD_TESTING)
     enable_testing()
     add_subdirectory(tests/ShooterCoreTests)
+    add_subdirectory(tests/SdlAdapterTests)
 endif()
 
