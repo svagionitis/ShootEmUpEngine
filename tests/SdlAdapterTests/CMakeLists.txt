@@ -21,19 +21,9 @@ target_include_directories(SdlAdapterTests PRIVATE
     ${CMAKE_SOURCE_DIR}/libs/SdlAdapter
 )
 
-apply_compiler_flags(SdlAdapterTests)
+copy_executable_dependencies(SdlAdapterTests)
 
-# Copy runtime DLLs on Windows
-if(WIN32)
-    add_custom_command(TARGET SdlAdapterTests POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:SDL2::SDL2>
-            $<TARGET_FILE:glog::glog>
-            $<TARGET_FILE:gflags::gflags>
-            $<TARGET_FILE:GTest::gtest>
-            $<TARGET_FILE_DIR:SdlAdapterTests>
-    )
-endif()
+apply_compiler_flags(SdlAdapterTests)
 
 # Register Master Test Run
 add_test(NAME SdlAdapterAllTests COMMAND SdlAdapterTests)

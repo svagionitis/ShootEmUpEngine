@@ -1,4 +1,14 @@
 cmake_minimum_required(VERSION 3.16)
+
+# Automatic vcpkg toolchain integration on Windows
+if(WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    if(DEFINED ENV{VCPKG_ROOT} AND EXISTS "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "Vcpkg toolchain file")
+    elseif(EXISTS "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "Vcpkg toolchain file")
+    endif()
+endif()
+
 project(ShootEmUpEngine VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -8,16 +18,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Export compile commands for tooling (clangd, IWYU)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+include(cmake/VcpkgDependencies.cmake)
 include(cmake/CompilerFlags.cmake)
 include(cmake/GitHooks.cmake)
 
 # Options
 option(BUILD_TESTING "Build the automated test suite" ON)
-
-# Discovery path for vcpkg packages
-if(EXISTS "C:/vcpkg/installed/x64-windows")
-    list(APPEND CMAKE_PREFIX_PATH "C:/vcpkg/installed/x64-windows")
-endif()
 
 find_package(SDL2 CONFIG REQUIRED)
 set(GFLAGS_USE_TARGET_NAMESPACE ON)

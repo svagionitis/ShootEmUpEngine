@@ -20,15 +20,7 @@ target_link_libraries(ShooterCoreTests PRIVATE
     glog::glog
 )
 
-if(WIN32)
-    add_custom_command(TARGET ShooterCoreTests POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:glog::glog>
-            $<TARGET_FILE:gflags::gflags>
-            $<TARGET_FILE:GTest::gtest>
-            $<TARGET_FILE_DIR:ShooterCoreTests>
-    )
-endif()
+copy_executable_dependencies(ShooterCoreTests)
 
 target_include_directories(ShooterCoreTests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
