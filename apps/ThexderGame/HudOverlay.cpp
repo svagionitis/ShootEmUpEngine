@@ -158,7 +158,7 @@ void HudOverlay::drawText(ShooterCore::RenderCommandQueue& queue, std::string_vi
 
 void HudOverlay::renderHud(ShooterCore::RenderCommandQueue& queue, ShooterCore::EnergyPoints energy,
     ShooterCore::ShieldGauge shield, std::uint32_t score, std::uint32_t hiScore, ShooterCore::TransformMode mode,
-    float warningTimer) noexcept
+    float warningTimer, ShooterCore::SecondaryWeaponType secType, std::uint8_t secAmmo) noexcept
 {
     // Layer 20: Screen-Space HUD Presentation
     const ShooterCore::ColorRgba bgHud { 10U, 14U, 24U, 220U };
@@ -221,13 +221,31 @@ void HudOverlay::renderHud(ShooterCore::RenderCommandQueue& queue, ShooterCore::
     drawText(queue, modeStr, 4.0f, 229.0f, 1U, txtCyan);
 
     // 7. Level name
-    drawText(queue, "LEVEL 1 - CAVERN", 90.0f, 229.0f, 1U, txtWhite);
+    drawText(queue, "LEVEL 1", 60.0f, 229.0f, 1U, txtWhite);
 
-    // 8. Low energy warning blink
+    // 8. Secondary Weapon Bay Indicator
+    std::string_view secName { "SEC:---" };
+    ShooterCore::ColorRgba secColor { 140U, 140U, 150U, 255U };
+    if (secType == ShooterCore::SecondaryWeaponType::HomingMissile) {
+        secName = "MSL:";
+        secColor = txtGold;
+    } else if (secType == ShooterCore::SecondaryWeaponType::FlashBomb) {
+        secName = "BMB:";
+        secColor = txtAlert;
+    }
+    drawText(queue, secName, 124.0f, 229.0f, 1U, secColor);
+
+    if (secType != ShooterCore::SecondaryWeaponType::None) {
+        std::array<char, 8> secBuf { };
+        (void)formatDecimal(secBuf.data(), secBuf.size(), secAmmo, 2U);
+        drawText(queue, std::string_view { secBuf.data() }, 152.0f, 229.0f, 1U, txtWhite);
+    }
+
+    // 9. Low energy warning blink
     if (energy.value() <= 20U) {
         const auto phase { static_cast<std::uint32_t>(warningTimer * 4.0f) };
         if ((phase % 2U) == 0U) {
-            drawText(queue, "! LOW ENERGY !", 210.0f, 229.0f, 1U, txtAlert);
+            drawText(queue, "! LOW !", 210.0f, 229.0f, 1U, txtAlert);
         }
     }
 }

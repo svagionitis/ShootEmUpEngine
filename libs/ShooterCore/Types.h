@@ -438,7 +438,15 @@ enum class SpriteId : std::uint16_t {
     TileMetalWall = 50U,
     TileCircuitWall = 51U,
     TileDestructibleWall = 52U,
-    TileHazardLava = 53U
+    TileHazardLava = 53U,
+    MissileInFlight = 60U,
+    CanisterMissile = 61U,
+    CanisterBomb = 62U,
+    CanisterEnergy = 63U,
+    CanisterShield = 64U,
+    EnemyInterceptor = 65U,
+    EnemyTurretCeiling = 66U,
+    EnemyBulletHostile = 67U
 };
 
 /// @brief Sound effect identifier for presentation audio playback.
@@ -453,7 +461,12 @@ enum class SoundEffectId : std::uint8_t {
     PlayerDamage = 7U,
     EnemyExplode = 8U,
     BlockCrumble = 9U,
-    EnergyWarning = 10U
+    EnergyWarning = 10U,
+    MissileLaunch = 11U,
+    FlashBombExplode = 12U,
+    CanisterPickup = 13U,
+    EnemyShoot = 14U,
+    WeaponSelect = 15U
 };
 
 /// @brief Music track identifier for presentation audio stream.
@@ -466,7 +479,11 @@ enum class EntityType : std::uint8_t {
     PatrolWalker = 2U,
     HomingFlyer = 3U,
     HostileBullet = 4U,
-    Particle = 5U
+    Particle = 5U,
+    DivingInterceptor = 6U,
+    WallCrawler = 7U,
+    CeilingTurret = 8U,
+    CargoCanister = 9U
 };
 
 /// @class EntityId
@@ -564,7 +581,14 @@ struct LightningArc final {
 
 /// @enum class ParticleType
 /// @brief Category of combat particle debris.
-enum class ParticleType : std::uint8_t { None = 0U, ImpactSpark = 1U, WallDebris = 2U, ShieldRipple = 3U };
+enum class ParticleType : std::uint8_t {
+    None = 0U,
+    ImpactSpark = 1U,
+    WallDebris = 2U,
+    ShieldRipple = 3U,
+    SmokeTrail = 4U,
+    ShockwaveRing = 5U
+};
 
 /// @struct Particle
 /// @brief Discrete visual particle entity.
@@ -586,6 +610,147 @@ struct ShieldFxState final {
     float hitAngleRad { 0.0f };
     float hitIntensity { 0.0f };
     bool isLowEnergy { false };
+};
+
+/// @enum class SecondaryWeaponType
+/// @brief Classification of auxiliary ordnance bays.
+enum class SecondaryWeaponType : std::uint8_t { None = 0U, HomingMissile = 1U, FlashBomb = 2U };
+
+/// @class SecondaryAmmo
+/// @brief Strongly-typed ammunition magazine counter with underflow and capacity guards.
+class SecondaryAmmo final {
+public:
+    constexpr SecondaryAmmo() noexcept = default;
+
+    explicit constexpr SecondaryAmmo(std::uint8_t count, std::uint8_t maxCap) noexcept
+        : count_ { std::min(count, maxCap) }
+        , maxCap_ { maxCap }
+    {
+    }
+
+    [[nodiscard]] constexpr std::uint8_t count() const noexcept
+    {
+        return count_;
+    }
+
+    [[nodiscard]] constexpr std::uint8_t maxCapacity() const noexcept
+    {
+        return maxCap_;
+    }
+
+    [[nodiscard]] constexpr bool hasAmmo() const noexcept
+    {
+        return count_ > 0U;
+    }
+
+    [[nodiscard]] constexpr bool isFull() const noexcept
+    {
+        return count_ >= maxCap_;
+    }
+
+    constexpr void consume() noexcept
+    {
+        if (count_ > 0U) {
+            --count_;
+        }
+    }
+
+    constexpr void replenish(std::uint8_t amount) noexcept
+    {
+        const std::uint16_t total { static_cast<std::uint16_t>(
+            static_cast<std::uint16_t>(count_) + static_cast<std::uint16_t>(amount)) };
+        count_ = static_cast<std::uint8_t>(std::min(total, static_cast<std::uint16_t>(maxCap_)));
+    }
+
+    [[nodiscard]] constexpr bool operator==(const SecondaryAmmo& o) const noexcept
+    {
+        return count_ == o.count_ && maxCap_ == o.maxCap_;
+    }
+
+    [[nodiscard]] constexpr bool operator!=(const SecondaryAmmo& o) const noexcept
+    {
+        return !(*this == o);
+    }
+
+private:
+    std::uint8_t count_ { 0U };
+    std::uint8_t maxCap_ { 0U };
+};
+
+/// @enum class CanisterType
+/// @brief Classification of tactical supply cargo canisters.
+enum class CanisterType : std::uint8_t { MissilePack = 0U, FlashBomb = 1U, EnergyBoost = 2U, ShieldRecharge = 3U };
+
+/// @enum class EnemyAiType
+/// @brief Classification of enemy AI behavioral controllers.
+enum class EnemyAiType : std::uint8_t {
+    PatrolWalker = 0U,
+    DivingInterceptor = 1U,
+    WallCrawler = 2U,
+    CeilingTurret = 3U
+};
+
+/// @enum class AiBehaviorState
+/// @brief State tags for hostile entity state machines.
+enum class AiBehaviorState : std::uint8_t {
+    Idle = 0U,
+    Stalk = 1U,
+    AcquireLock = 2U,
+    HighSpeedSwoop = 3U,
+    BreakAway = 4U,
+    Crawling = 5U,
+    Aiming = 6U
+};
+
+inline constexpr std::size_t kMaxActiveMissiles { 8U };
+inline constexpr std::size_t kMaxCanisters { 16U };
+inline constexpr std::size_t kMaxNests { 16U };
+
+/// @struct HomingMissile
+/// @brief State data for an airborne self-guided micro-missile.
+struct HomingMissile final {
+    WorldPos pos { 0.0f, 0.0f };
+    Velocity vel { 0.0f, 0.0f };
+    EntityId targetId { };
+    float fuelSec { 2.5f };
+    float smokeTimer { 0.0f };
+    float angleDeg { 0.0f };
+    bool active { false };
+};
+
+/// @struct FlashBombState
+/// @brief State data for an active screen-clearing thermonuclear shockwave.
+struct FlashBombState final {
+    WorldPos center { 0.0f, 0.0f };
+    float currentRadius { 0.0f };
+    float maxRadius { 320.0f };
+    float timer { 0.0f };
+    float duration { 0.35f };
+    bool active { false };
+};
+
+/// @struct CargoCanister
+/// @brief State data for a dropped supply cargo container.
+struct CargoCanister final {
+    WorldPos pos { 0.0f, 0.0f };
+    Velocity vel { 0.0f, 0.0f };
+    CanisterType type { CanisterType::MissilePack };
+    float bobTimer { 0.0f };
+    float lifeTimer { 15.0f };
+    bool onGround { false };
+    bool magnetized { false };
+    bool active { false };
+};
+
+/// @struct BioNest
+/// @brief Stationary organic subterranean generator hive.
+struct BioNest final {
+    WorldPos pos { 0.0f, 0.0f };
+    float spawnTimer { 0.0f };
+    float spawnInterval { 4.0f };
+    std::uint16_t health { 80U };
+    bool active { false };
+    bool destroyed { false };
 };
 
 } // namespace ShooterCore

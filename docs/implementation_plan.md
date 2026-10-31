@@ -350,6 +350,7 @@ flowchart TD
 
 ### Phase 11: Fire Hawk (Thexder 2) Secondary Arsenal & Advanced Enemy AI
 - **Objective**: Recreate the expanded tactical arsenal and combat depth introduced in *Fire Hawk: Thexder - The Second Contact*.
+- **Detailed Plan**: See [docs/phase11_plan.md](phase11_plan.md) for full architectural and implementation specifications.
 - **Key Deliverables**:
   - **Fire Hawk Secondary Arsenal**:
     - **Homing Micro-Missiles**: Self-propelled projectiles that accelerate and steer toward airborne enemies, leaving smoke particle trails.
@@ -360,7 +361,48 @@ flowchart TD
     - **Bio-Nest Generators**: Spawn escalating waves of insectoid/drone enemies until destroyed.
     - **Diving Interceptors**: High-speed suicide flight paths that force defensive jet maneuvers.
     - **Wall Crawlers & Ceiling Turrets**: Patrol labyrinth perimeters and fire aimed energy bolts.
-- **Verification**: Deterministic headless simulation tests in `tests/ShooterCoreTests/TestWeaponSystem.cpp` and `TestEntitySpawner.cpp`.
+- **Verification**: Deterministic headless simulation tests in `tests/ShooterCoreTests/TestSecondaryArsenal.cpp`, `TestEnemyAi.cpp`, and `TestNestManager.cpp`.
+
+### ASCII Secondary Arsenal & Enemy AI Overview
+```
++-------------------------------------------------------------------------------+
+|                       FIRE HAWK ARSENAL & ENEMY AI                            |
+|                                                                               |
+|   [Ceiling Turret: Aimed Fire]                     [Bio-Nest Generator Hive]  |
+|             \ (Aimed Bullet)                                |                 |
+|              v                                              v (Spawn Drone)   |
+|   [Thexder] ════> [Homing Missile: Proportional Nav] ─> [Diving Interceptor]  |
+|         \                                                                     |
+|          \──> [Flash Bomb Detonation: Viewport Shockwave Clears Screen]       |
+|                                                                               |
+|   [Wall Crawler] ──> Traverses perimeter normals (Floor, Wall, Ceiling)       |
+|   [Cargo Canister] ──> Drops from destroyed nests with magnetic pickup        |
++-------------------------------------------------------------------------------+
+```
+
+### Mermaid Secondary Combat Flow
+```mermaid
+flowchart TD
+    A["Secondary Fire Pressed"] --> B{"Active Weapon Bay"}
+    B -- "Homing Missile" --> C{"Ammo > 0?"}
+    B -- "Flash Bomb" --> D{"Ammo > 0?"}
+    
+    C -- Yes --> E["Launch Missile & Steer with Proportional Nav"]
+    D -- Yes --> F["Detonate Viewport Shockwave & Disintegrate Drones"]
+    C -- No --> G["Empty Magazine Click"]
+    D -- No --> G
+    
+    E --> H["Emit Rocket Smoke Trail Particles"]
+    F --> I["Screen White Flash Overlay & Sub-Bass Rumble"]
+    
+    J["Enemy AI Tick"] --> K["Bio-Nest Escalate Swarm Frequency"]
+    J --> L["Diving Interceptor Swoop Attack"]
+    J --> M["Wall Crawler Perimeter Normal Tracing"]
+    J --> N["Ceiling Turret Aimed Bullet Fire"]
+    
+    K --> O{"Nest Destroyed?"}
+    O -- Yes --> P["Drop Cargo Canister (Ammo/Energy Restock)"]
+```
 
 ---
 

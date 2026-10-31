@@ -11,8 +11,12 @@
 
 #include "AnimationController.h"
 #include "CollisionSolver.h"
+#include "EnemyAiSystem.h"
 #include "Hitbox.h"
+#include "NestManager.h"
 #include "ParticlePool.h"
+#include "SecondaryArsenal.h"
+#include "SupplyDropSystem.h"
 #include "TileMap.h"
 #include "TransformSystem.h"
 #include "Types.h"
@@ -43,8 +47,12 @@ void GameEngine::initLevel(const TileMap& map, WorldPos playerSpawn) noexcept
     map_ = map;
     entities_.clear();
     particlePool_.clear();
+    secondaryArsenal_.clear();
+    supplyDropSys_.clear();
+    nestManager_.clear();
     renderQueue_.clear();
     audioQueue_.clear();
+    prevCycleInput_ = false;
 
     playerPos_ = playerSpawn;
     playerVel_ = Velocity { 0.0f, 0.0f };
@@ -103,6 +111,12 @@ void GameEngine::updateInput(DeltaTime dt, EngineInput input) noexcept
             }
         }
     }
+
+    if (input.isCycleWeapon() && !prevCycleInput_) {
+        secondaryArsenal_.cycleWeapon();
+        audioQueue_.pushSound(SoundEffectId::WeaponSelect);
+    }
+    prevCycleInput_ = input.isCycleWeapon();
 
     transformSys_.update(dt);
     playerBox_ = computeHitbox(playerPos_);
@@ -198,9 +212,25 @@ void GameEngine::updateWeapons(DeltaTime dt, EngineInput input) noexcept
 
     for (std::size_t i { 0U }; i < entities_.capacity() && candCount < WeaponSystem::kMaxTargets; ++i) {
         const EntitySlot& slt { entities_.slot(i) };
-        if (slt.active && (slt.data.type == EntityType::PatrolWalker || slt.data.type == EntityType::HomingFlyer)) {
+        if (slt.active
+            && (slt.data.type == EntityType::PatrolWalker || slt.data.type == EntityType::HomingFlyer
+                || slt.data.type == EntityType::DivingInterceptor || slt.data.type == EntityType::WallCrawler
+                || slt.data.type == EntityType::CeilingTurret)) {
             candidates[candCount].id = static_cast<std::uint32_t>(i);
             candidates[candCount].bounds = slt.data.bounds;
+            candidates[candCount].type = TargetType::Hostile;
+            candidates[candCount].active = true;
+            ++candCount;
+        }
+    }
+
+    // 2. Harvest active BioNests
+    const auto& nests { nestManager_.getNests() };
+    for (std::size_t nIdx { 0U }; nIdx < nestManager_.nestCount() && candCount < WeaponSystem::kMaxTargets; ++nIdx) {
+        if (nests[nIdx].active && !nests[nIdx].destroyed) {
+            candidates[candCount].id = static_cast<std::uint32_t>(2000U + nIdx);
+            candidates[candCount].bounds = Hitbox { WorldPos { nests[nIdx].pos.x - 16.0f, nests[nIdx].pos.y - 16.0f },
+                WorldPos { nests[nIdx].pos.x + 16.0f, nests[nIdx].pos.y + 16.0f } };
             candidates[candCount].type = TargetType::Hostile;
             candidates[candCount].active = true;
             ++candCount;
@@ -264,6 +294,9 @@ void GameEngine::updateWeapons(DeltaTime dt, EngineInput input) noexcept
                     }
                 }
             }
+        } else if (beam.lockedToTarget && beam.targetId >= 2000U) {
+            const std::size_t nestIdx { static_cast<std::size_t>(beam.targetId - 2000U) };
+            nestManager_.damageNest(nestIdx, DamageValue { 1U }, supplyDropSys_, particlePool_, audioQueue_);
         } else if (beam.lockedToTarget && beam.targetId >= 1000U) {
             particlePool_.emitDebris(beam.endpoint, 2U);
             particlePool_.emitSparks(beam.endpoint, 0.0f, 2U);
@@ -272,6 +305,17 @@ void GameEngine::updateWeapons(DeltaTime dt, EngineInput input) noexcept
             particlePool_.emitSparks(beam.endpoint, 0.0f, 1U);
         }
     }
+
+    // 6. Secondary Arsenal & Tactical AI
+    if (input.isFireSecondary()) {
+        secondaryArsenal_.triggerFire(playerPos_, playerFacing_, entities_, audioQueue_, particlePool_);
+    }
+
+    secondaryArsenal_.update(dt, entities_, map_, particlePool_, audioQueue_);
+    nestManager_.update(dt, playerPos_, entities_, supplyDropSys_, particlePool_, audioQueue_);
+    enemyAi_.update(
+        dt, playerPos_, playerBox_, weaponSys_.isShieldActive(), energy_, entities_, map_, audioQueue_, particlePool_);
+    supplyDropSys_.update(dt, playerBox_, map_, secondaryArsenal_, energy_, playerShield_, audioQueue_, particlePool_);
 }
 
 void GameEngine::updateEntities(DeltaTime dt) noexcept
@@ -363,9 +407,61 @@ void GameEngine::emitCommands() noexcept
 
         SpriteId spr { anim_.currentEnemySprite(slt.data.type) };
         if (spr == SpriteId::None) {
-            spr = (slt.data.type == EntityType::PatrolWalker) ? SpriteId::EnemyPatrol : SpriteId::EnemyFlyer;
+            if (slt.data.type == EntityType::PatrolWalker) {
+                spr = SpriteId::EnemyPatrol;
+            } else if (slt.data.type == EntityType::DivingInterceptor) {
+                spr = SpriteId::EnemyInterceptor;
+            } else if (slt.data.type == EntityType::WallCrawler) {
+                spr = SpriteId::EnemyCrawler1;
+            } else if (slt.data.type == EntityType::CeilingTurret) {
+                spr = SpriteId::EnemyTurretCeiling;
+            } else if (slt.data.type == EntityType::HostileBullet) {
+                spr = SpriteId::EnemyBulletHostile;
+            } else {
+                spr = SpriteId::EnemyFlyer;
+            }
         }
         renderQueue_.pushSprite(spr, slt.data.pos, slt.data.facing, 5U);
+    }
+
+    // 2b. BioNests
+    const auto& nests { nestManager_.getNests() };
+    for (std::size_t i { 0U }; i < nestManager_.nestCount(); ++i) {
+        if (nests[i].active && !nests[i].destroyed) {
+            renderQueue_.pushSprite(SpriteId::NestCoreActive, nests[i].pos, FacingDirection::Right, 4U);
+        }
+    }
+
+    // 2c. Secondary Ordnance: Missiles & Shockwaves
+    const auto& missiles { secondaryArsenal_.getMissiles() };
+    for (std::size_t i { 0U }; i < SecondaryArsenal::kMaxMissiles; ++i) {
+        if (missiles[i].active) {
+            renderQueue_.pushSprite(
+                SpriteId::MissileInFlight, missiles[i].pos, FacingDirection::Right, 8U, missiles[i].angleDeg);
+        }
+    }
+
+    const FlashBombState& fb { secondaryArsenal_.getFlashBomb() };
+    if (fb.active && fb.duration > 0.0f) {
+        const float alpha { std::clamp(1.0f - (fb.timer / fb.duration), 0.0f, 1.0f) };
+        renderQueue_.pushShockwave(fb.center, fb.currentRadius, alpha, 14U);
+    }
+
+    // 2d. Cargo Canisters
+    const auto& canisters { supplyDropSys_.getCanisters() };
+    for (std::size_t i { 0U }; i < SupplyDropSystem::kMaxCanisterSlots; ++i) {
+        if (canisters[i].active) {
+            SpriteId spr { SpriteId::CanisterMissile };
+            if (canisters[i].type == CanisterType::FlashBomb) {
+                spr = SpriteId::CanisterBomb;
+            } else if (canisters[i].type == CanisterType::EnergyBoost) {
+                spr = SpriteId::CanisterEnergy;
+            } else if (canisters[i].type == CanisterType::ShieldRecharge) {
+                spr = SpriteId::CanisterShield;
+            }
+            const WorldPos bobPos { canisters[i].pos.x, canisters[i].pos.y + (std::sin(canisters[i].bobTimer) * 2.0f) };
+            renderQueue_.pushSprite(spr, bobPos, FacingDirection::Right, 6U);
+        }
     }
 
     // 3. Player craft

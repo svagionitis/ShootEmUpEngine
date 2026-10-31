@@ -64,6 +64,25 @@ void runTypeTests() noexcept
 
     const TileCoord zeroTileSize { posA.toTileCoord(0.0f) };
     TEST_ASSERT(zeroTileSize.col == 0U && zeroTileSize.row == 0U, "Zero tile size must safely return (0, 0)");
+
+    // SecondaryAmmo Tests
+    SecondaryAmmo ammo { 10U, 24U };
+    TEST_ASSERT(ammo.count() == 10U, "Initial ammo count must be 10");
+    TEST_ASSERT(ammo.maxCapacity() == 24U, "Max ammo capacity must be 24");
+    TEST_ASSERT(ammo.hasAmmo(), "Ammo must be available");
+    TEST_ASSERT(!ammo.isFull(), "Ammo must not be full");
+
+    ammo.consume();
+    TEST_ASSERT(ammo.count() == 9U, "Ammo must decrement after consume");
+
+    ammo.replenish(20U);
+    TEST_ASSERT(ammo.count() == 24U, "Ammo must clamp to maxCapacity");
+    TEST_ASSERT(ammo.isFull(), "Ammo must be full");
+
+    SecondaryAmmo emptyAmmo { 0U, 10U };
+    TEST_ASSERT(!emptyAmmo.hasAmmo(), "Empty ammo hasAmmo must be false");
+    emptyAmmo.consume();
+    TEST_ASSERT(emptyAmmo.count() == 0U, "Empty ammo consume must not underflow");
 }
 
 } // namespace ShooterCore::Test

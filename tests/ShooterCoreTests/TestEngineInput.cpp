@@ -20,6 +20,8 @@ void runEngineInputTests() noexcept
         TEST_ASSERT(!input.isTransform(), "Default input Transform must be false");
         TEST_ASSERT(!input.isFire(), "Default input Fire must be false");
         TEST_ASSERT(!input.isShield(), "Default input Shield must be false");
+        TEST_ASSERT(!input.isFireSecondary(), "Default input FireSecondary must be false");
+        TEST_ASSERT(!input.isCycleWeapon(), "Default input CycleWeapon must be false");
     }
 
     // Test 2: Button setting and clearing
@@ -29,18 +31,22 @@ void runEngineInputTests() noexcept
         TEST_ASSERT(input.isUp(), "Up must be true after setButton");
         TEST_ASSERT(input.raw() == EngineInput::kUp, "raw() must match kUp");
 
-        input.setButton(EngineInput::kFire);
+        input.setButton(EngineInput::kFireSecondary);
         TEST_ASSERT(input.isUp(), "Up must remain true");
-        TEST_ASSERT(input.isFire(), "Fire must be true");
-        TEST_ASSERT(input.raw() == (EngineInput::kUp | EngineInput::kFire), "raw() must hold combined bits");
+        TEST_ASSERT(input.isFireSecondary(), "FireSecondary must be true");
+
+        input.setButton(EngineInput::kCycleWeapon);
+        TEST_ASSERT(input.isCycleWeapon(), "CycleWeapon must be true");
 
         input.clearButton(EngineInput::kUp);
         TEST_ASSERT(!input.isUp(), "Up must be false after clearButton");
-        TEST_ASSERT(input.isFire(), "Fire must remain true");
+        TEST_ASSERT(input.isFireSecondary(), "FireSecondary must remain true");
+        TEST_ASSERT(input.isCycleWeapon(), "CycleWeapon must remain true");
 
         input.clear();
         TEST_ASSERT(input.raw() == EngineInput::kNone, "clear() must reset mask to 0");
-        TEST_ASSERT(!input.isFire(), "Fire must be false after clear");
+        TEST_ASSERT(!input.isFireSecondary(), "FireSecondary must be false after clear");
+        TEST_ASSERT(!input.isCycleWeapon(), "CycleWeapon must be false after clear");
     }
 
     // Test 3: Multiple simultaneous chords

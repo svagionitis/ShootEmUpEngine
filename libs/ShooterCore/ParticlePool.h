@@ -39,6 +39,15 @@ public:
     /// @param[in] count Number of shield sparks to emit.
     void emitShieldSparks(WorldPos origin, float hitAngle, std::size_t count) noexcept;
 
+    /// @brief Emit a puff of rocket propellant smoke behind an accelerating missile.
+    /// @param[in] origin Emitter source position.
+    void emitSmoke(WorldPos origin) noexcept;
+
+    /// @brief Emit expanding shockwave debris/plasma particles for flash bomb detonations.
+    /// @param[in] origin Center of detonation shockwave.
+    /// @param[in] count Number of shockwave particles to emit.
+    void emitShockwave(WorldPos origin, std::size_t count) noexcept;
+
     /// @brief Retrieve bounded pool array.
     /// @return Const reference to particle storage.
     [[nodiscard]] const std::array<Particle, kCapacity>& particles() const noexcept

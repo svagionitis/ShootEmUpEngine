@@ -19,7 +19,8 @@ enum class RenderCommandType : std::uint8_t {
     DrawBar = 4U,
     DrawLightning = 5U,
     DrawShield = 6U,
-    DrawParticle = 7U
+    DrawParticle = 7U,
+    DrawShockwave = 8U
 };
 
 /// @struct RenderCommand
@@ -153,6 +154,14 @@ public:
     /// @param[in] layer Drawing layer.
     /// @return true if successfully pushed; false if queue is full.
     bool pushParticle(WorldPos pos, ColorRgba color, float size, std::uint8_t layer = 13U) noexcept;
+
+    /// @brief Push expanding shockwave ring render command.
+    /// @param[in] center Detonation center world position.
+    /// @param[in] radius Expanding shockwave radius.
+    /// @param[in] alpha Fade opacity [0.0, 1.0].
+    /// @param[in] layer Drawing layer.
+    /// @return true if successfully pushed; false if queue is full.
+    bool pushShockwave(WorldPos center, float radius, float alpha, std::uint8_t layer = 14U) noexcept;
 
 private:
     std::array<RenderCommand, kCapacity> commands_ { };

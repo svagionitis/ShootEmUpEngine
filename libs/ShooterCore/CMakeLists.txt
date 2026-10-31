@@ -3,14 +3,22 @@ add_library(ShooterCore STATIC
     AnimationController.h
     AudioCommandQueue.cpp
     CollisionSolver.cpp
+    EnemyAiSystem.cpp
+    EnemyAiSystem.h
     EntityPool.cpp
     GameEngine.cpp
     Hitbox.cpp
     Logger.cpp
     Logger.h
+    NestManager.cpp
+    NestManager.h
     ParticlePool.cpp
     ParticlePool.h
     RenderCommandQueue.cpp
+    SecondaryArsenal.cpp
+    SecondaryArsenal.h
+    SupplyDropSystem.cpp
+    SupplyDropSystem.h
     TileMap.cpp
     TransformSystem.cpp
     WeaponSystem.cpp

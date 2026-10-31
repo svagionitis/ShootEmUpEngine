@@ -56,6 +56,7 @@ private:
     void drawLightning(const ShooterCore::RenderCommand& cmd) noexcept;
     void drawShieldBubble(const ShooterCore::RenderCommand& cmd) noexcept;
     void drawParticles(const ShooterCore::RenderCommand& cmd) noexcept;
+    void drawShockwave(const ShooterCore::RenderCommand& cmd) noexcept;
 
     void drawRobotSprite(float x, float y, ShooterCore::FacingDirection facing, bool isAltWalk, bool isJump) noexcept;
     void drawJetSprite(float x, float y, ShooterCore::FacingDirection facing) noexcept;

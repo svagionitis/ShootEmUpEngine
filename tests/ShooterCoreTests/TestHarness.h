@@ -109,5 +109,9 @@ void runParticlePoolTests() noexcept;
 void runGameEngineTests() noexcept;
 void runAnimationTests() noexcept;
 void runDeterminismSoakTests() noexcept;
+void runSecondaryArsenalTests() noexcept;
+void runEnemyAiTests() noexcept;
+void runNestManagerTests() noexcept;
+void runSupplyDropTests() noexcept;
 
 } // namespace ShooterCore::Test

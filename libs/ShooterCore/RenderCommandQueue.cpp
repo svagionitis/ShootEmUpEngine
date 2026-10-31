@@ -191,4 +191,29 @@ bool RenderCommandQueue::pushParticle(WorldPos pos, ColorRgba color, float size,
     return true;
 }
 
+bool RenderCommandQueue::pushShockwave(WorldPos center, float radius, float alpha, std::uint8_t layer) noexcept
+{
+    if (count_ >= kCapacity) {
+        return false;
+    }
+
+    RenderCommand& cmd { commands_[count_] };
+    cmd.type = RenderCommandType::DrawShockwave;
+    cmd.sprite = SpriteId::None;
+    cmd.tileType = TileType::Empty;
+    cmd.pos = center;
+    cmd.endpoint = WorldPos { 0.0f, 0.0f };
+    cmd.width = radius * 2.0f;
+    cmd.height = radius * 2.0f;
+    cmd.fillPct = std::clamp(alpha, 0.0f, 1.0f);
+    cmd.color = ColorRgba { 255U, 255U, 255U, static_cast<std::uint8_t>(std::clamp(alpha, 0.0f, 1.0f) * 255.0f) };
+    cmd.glowColor = ColorRgba { 180U, 220U, 255U, static_cast<std::uint8_t>(std::clamp(alpha, 0.0f, 1.0f) * 200.0f) };
+    cmd.facing = FacingDirection::Right;
+    cmd.rotationDegrees = 0.0f;
+    cmd.layer = layer;
+
+    ++count_;
+    return true;
+}
+
 } // namespace ShooterCore

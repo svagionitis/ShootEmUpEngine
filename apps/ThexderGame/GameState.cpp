@@ -51,6 +51,23 @@ void GameState::resetGame() noexcept
     engine_.initLevel(map_, Level1Map::getPlayerSpawn());
     spawner_.initLevel1Nests();
 
+    // Register Phase 11 Bio-Nest Generators in NestManager
+    auto& nestMgr { engine_.getNestManager() };
+    nestMgr.addNest(ShooterCore::WorldPos { 280.0f, 140.0f }, 80U, 4.0f);
+    nestMgr.addNest(ShooterCore::WorldPos { 600.0f, 100.0f }, 80U, 3.5f);
+    nestMgr.addNest(ShooterCore::WorldPos { 900.0f, 180.0f }, 80U, 3.0f);
+    nestMgr.addNest(ShooterCore::WorldPos { 1200.0f, 120.0f }, 80U, 2.5f);
+
+    // Seed Tactical Ceiling Turrets and Wall Crawlers
+    engine_.spawnEnemy(ShooterCore::EntityType::CeilingTurret, ShooterCore::WorldPos { 400.0f, 32.0f },
+        ShooterCore::Hitbox { ShooterCore::WorldPos { 392.0f, 28.0f }, ShooterCore::WorldPos { 408.0f, 44.0f } }, 30U);
+    engine_.spawnEnemy(ShooterCore::EntityType::CeilingTurret, ShooterCore::WorldPos { 800.0f, 32.0f },
+        ShooterCore::Hitbox { ShooterCore::WorldPos { 792.0f, 28.0f }, ShooterCore::WorldPos { 808.0f, 44.0f } }, 30U);
+
+    engine_.spawnEnemy(ShooterCore::EntityType::WallCrawler, ShooterCore::WorldPos { 350.0f, 192.0f },
+        ShooterCore::Hitbox { ShooterCore::WorldPos { 342.0f, 184.0f }, ShooterCore::WorldPos { 358.0f, 200.0f } },
+        20U);
+
     updateCamera(engine_.getPlayerPos());
 }
 
@@ -270,8 +287,13 @@ void GameState::buildRenderQueue(ShooterCore::RenderCommandQueue& outQueue) noex
     // 5. Screen-space HUD overlay
     const ShooterCore::ShieldGauge shieldGauge { static_cast<std::uint8_t>(
         engine_.getWeaponSystem().isShieldActive() ? 100U : 0U) };
-    hud_.renderHud(
-        outQueue, engine_.getPlayerEnergy(), shieldGauge, score_, hiScore_, engine_.getPlayerMode(), warningTimer_);
+    const auto& arsenal { engine_.getSecondaryArsenal() };
+    const std::uint8_t secAmmo { (arsenal.activeWeapon() == ShooterCore::SecondaryWeaponType::HomingMissile)
+            ? arsenal.missileAmmo().count()
+            : arsenal.bombAmmo().count() };
+
+    hud_.renderHud(outQueue, engine_.getPlayerEnergy(), shieldGauge, score_, hiScore_, engine_.getPlayerMode(),
+        warningTimer_, arsenal.activeWeapon(), secAmmo);
 }
 
 } // namespace ThexderGame

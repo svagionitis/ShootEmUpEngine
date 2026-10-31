@@ -91,6 +91,16 @@ void SdlInput::handleKeyEvent(std::int32_t keycode, bool isDown) noexcept
         mask = ShooterCore::EngineInput::kShield;
         break;
 
+    case SDLK_v:
+    case SDLK_f:
+        mask = ShooterCore::EngineInput::kFireSecondary;
+        break;
+
+    case SDLK_q:
+    case SDLK_e:
+        mask = ShooterCore::EngineInput::kCycleWeapon;
+        break;
+
     case SDLK_ESCAPE:
         if (isDown) {
             quitRequested_ = true;

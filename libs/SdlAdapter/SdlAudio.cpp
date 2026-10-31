@@ -317,6 +317,77 @@ void SdlAudio::playSound(ShooterCore::SoundEffectId effect, float volume) noexce
         break;
     }
 
+    case ShooterCore::SoundEffectId::MissileLaunch: {
+        auto& vp { voices_[0] };
+        vp.active = true;
+        vp.waveform = ChannelWaveform::Pulse;
+        vp.dutyCycle = 0.25f;
+        vp.frequency = 660.0f;
+        vp.sweepRate = -800.0f;
+        vp.amplitude = volClamped;
+        vp.decayRate = volClamped / 0.22f;
+
+        auto& vn { voices_[3] };
+        vn.active = true;
+        vn.waveform = ChannelWaveform::Noise;
+        vn.amplitude = volClamped * 0.8f;
+        vn.decayRate = (volClamped * 0.8f) / 0.25f;
+        break;
+    }
+
+    case ShooterCore::SoundEffectId::FlashBombExplode: {
+        auto& vn { voices_[3] };
+        vn.active = true;
+        vn.waveform = ChannelWaveform::Noise;
+        vn.amplitude = volClamped * 2.0f;
+        vn.decayRate = (volClamped * 2.0f) / 0.70f;
+
+        auto& vt { voices_[2] };
+        vt.active = true;
+        vt.waveform = ChannelWaveform::Triangle;
+        vt.frequency = 90.0f;
+        vt.sweepRate = -60.0f;
+        vt.amplitude = volClamped * 1.5f;
+        vt.decayRate = (volClamped * 1.5f) / 0.60f;
+        break;
+    }
+
+    case ShooterCore::SoundEffectId::CanisterPickup: {
+        auto& vp { voices_[0] };
+        vp.active = true;
+        vp.waveform = ChannelWaveform::Pulse;
+        vp.dutyCycle = 0.50f;
+        vp.frequency = 587.33f;
+        vp.sweepRate = 1200.0f;
+        vp.amplitude = volClamped * 1.2f;
+        vp.decayRate = (volClamped * 1.2f) / 0.25f;
+        break;
+    }
+
+    case ShooterCore::SoundEffectId::EnemyShoot: {
+        auto& vp { voices_[1] };
+        vp.active = true;
+        vp.waveform = ChannelWaveform::Pulse;
+        vp.dutyCycle = 0.125f;
+        vp.frequency = 440.0f;
+        vp.sweepRate = -1000.0f;
+        vp.amplitude = volClamped * 0.9f;
+        vp.decayRate = (volClamped * 0.9f) / 0.12f;
+        break;
+    }
+
+    case ShooterCore::SoundEffectId::WeaponSelect: {
+        auto& vp { voices_[0] };
+        vp.active = true;
+        vp.waveform = ChannelWaveform::Pulse;
+        vp.dutyCycle = 0.50f;
+        vp.frequency = 880.0f;
+        vp.sweepRate = 0.0f;
+        vp.amplitude = volClamped * 0.8f;
+        vp.decayRate = (volClamped * 0.8f) / 0.08f;
+        break;
+    }
+
     case ShooterCore::SoundEffectId::None:
     default:
         break;

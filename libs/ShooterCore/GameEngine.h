@@ -8,11 +8,15 @@
 #include "AnimationController.h"
 #include "AudioCommandQueue.h"
 #include "CollisionSolver.h"
+#include "EnemyAiSystem.h"
 #include "EngineInput.h"
 #include "EntityPool.h"
 #include "Hitbox.h"
+#include "NestManager.h"
 #include "ParticlePool.h"
 #include "RenderCommandQueue.h"
+#include "SecondaryArsenal.h"
+#include "SupplyDropSystem.h"
 #include "TileMap.h"
 #include "TransformSystem.h"
 #include "Types.h"
@@ -159,6 +163,46 @@ public:
         return particlePool_;
     }
 
+    [[nodiscard]] const SecondaryArsenal& getSecondaryArsenal() const noexcept
+    {
+        return secondaryArsenal_;
+    }
+
+    [[nodiscard]] SecondaryArsenal& getSecondaryArsenal() noexcept
+    {
+        return secondaryArsenal_;
+    }
+
+    [[nodiscard]] const SupplyDropSystem& getSupplyDropSystem() const noexcept
+    {
+        return supplyDropSys_;
+    }
+
+    [[nodiscard]] SupplyDropSystem& getSupplyDropSystem() noexcept
+    {
+        return supplyDropSys_;
+    }
+
+    [[nodiscard]] const NestManager& getNestManager() const noexcept
+    {
+        return nestManager_;
+    }
+
+    [[nodiscard]] NestManager& getNestManager() noexcept
+    {
+        return nestManager_;
+    }
+
+    [[nodiscard]] const EnemyAiSystem& getEnemyAi() const noexcept
+    {
+        return enemyAi_;
+    }
+
+    [[nodiscard]] EnemyAiSystem& getEnemyAi() noexcept
+    {
+        return enemyAi_;
+    }
+
     /// @brief Spawn an enemy entity into the simulation.
     /// @param[in] type Entity classification category.
     /// @param[in] pos Continuous world coordinates.
@@ -181,6 +225,10 @@ private:
     WeaponSystem weaponSys_ { };
     AnimationController anim_ { };
     ParticlePool particlePool_ { };
+    SecondaryArsenal secondaryArsenal_ { };
+    SupplyDropSystem supplyDropSys_ { };
+    NestManager nestManager_ { };
+    EnemyAiSystem enemyAi_ { };
 
     RenderCommandQueue renderQueue_ { };
     AudioCommandQueue audioQueue_ { };
@@ -190,10 +238,12 @@ private:
     Hitbox playerBox_ { };
     FacingDirection playerFacing_ { FacingDirection::Right };
     EnergyPoints energy_ { EnergyPoints::kDefaultMax };
+    ShieldGauge playerShield_ { 0U };
     CameraViewport camera_ { };
     bool onGround_ { false };
     bool isAlive_ { true };
     bool playerCrouch_ { false };
+    bool prevCycleInput_ { false };
 };
 
 } // namespace ShooterCore

@@ -4,12 +4,16 @@ add_executable(ShooterCoreTests
     TestCollisionSolver.cpp
     TestCommandQueues.cpp
     TestDeterminismSoak.cpp
+    TestEnemyAi.cpp
     TestEngineInput.cpp
     TestEntityPool.cpp
     TestGameEngine.cpp
     TestHitbox.cpp
+    TestNestManager.cpp
     TestParticlePool.cpp
+    TestSecondaryArsenal.cpp
     TestShieldSystem.cpp
+    TestSupplyDropSystem.cpp
     TestTileMap.cpp
     TestTransformSystem.cpp
     TestTypes.cpp
@@ -55,3 +59,7 @@ register_shooter_test(ShooterCore_ParticlePool     ParticlePool     "combat;part
 register_shooter_test(ShooterCore_GameEngine       GameEngine       "integration;engine" 15)
 register_shooter_test(ShooterCore_Animation        Animation        "unit;animation"     5)
 register_shooter_test(ShooterCore_DeterminismSoak  DeterminismSoak  "soak;determinism"   60)
+register_shooter_test(ShooterCore_SecondaryArsenal SecondaryArsenal "combat;weapons"     10)
+register_shooter_test(ShooterCore_EnemyAi          EnemyAi          "unit;ai"            10)
+register_shooter_test(ShooterCore_NestManager      NestManager      "unit;spawner"       10)
+register_shooter_test(ShooterCore_SupplyDrop       SupplyDrop       "unit;logistics"     10)

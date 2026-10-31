@@ -26,7 +26,8 @@ public:
     /// @param[in] warningTimer Warning flash cycle accumulator.
     void renderHud(ShooterCore::RenderCommandQueue& queue, ShooterCore::EnergyPoints energy,
         ShooterCore::ShieldGauge shield, std::uint32_t score, std::uint32_t hiScore, ShooterCore::TransformMode mode,
-        float warningTimer) noexcept;
+        float warningTimer, ShooterCore::SecondaryWeaponType secType = ShooterCore::SecondaryWeaponType::None,
+        std::uint8_t secAmmo = 0U) noexcept;
 
     /// @brief Rasterize plain ASCII string into command queue using 5x7 font.
     /// @param[out] queue Render command queue.

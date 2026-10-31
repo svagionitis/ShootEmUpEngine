@@ -80,6 +80,14 @@ void ParticlePool::update(DeltaTime dt) noexcept
         } else if (p.type == ParticleType::ShieldRipple) {
             p.vel.dx *= std::max(0.0f, 1.0f - (2.0f * dtSec));
             p.vel.dy *= std::max(0.0f, 1.0f - (2.0f * dtSec));
+        } else if (p.type == ParticleType::SmokeTrail) {
+            p.vel.dx *= std::max(0.0f, 1.0f - (1.0f * dtSec));
+            p.vel.dy *= std::max(0.0f, 1.0f - (1.0f * dtSec));
+            p.size += 2.0f * dtSec;
+        } else if (p.type == ParticleType::ShockwaveRing) {
+            p.vel.dx *= std::max(0.0f, 1.0f - (0.5f * dtSec));
+            p.vel.dy *= std::max(0.0f, 1.0f - (0.5f * dtSec));
+            p.size += 4.0f * dtSec;
         }
 
         // Alpha decay
@@ -156,6 +164,45 @@ void ParticlePool::emitShieldSparks(WorldPos origin, float hitAngle, std::size_t
         p.size = randomFloat(1.5f, 3.0f);
         p.type = ParticleType::ShieldRipple;
         p.color = ColorRgba { 80U, 210U, 255U, 255U };
+        p.active = true;
+    }
+}
+
+void ParticlePool::emitSmoke(WorldPos origin) noexcept
+{
+    const std::size_t idx { allocateSlot() };
+    Particle& p { pool_[idx] };
+
+    const float angle { randomFloat(0.0f, kTwoPi) };
+    const float speed { randomFloat(5.0f, 25.0f) };
+
+    p.pos = origin;
+    p.vel = Velocity { std::cos(angle) * speed, std::sin(angle) * speed };
+    p.maxLifetime = randomFloat(0.3f, 0.6f);
+    p.lifetime = p.maxLifetime;
+    p.size = randomFloat(2.0f, 3.5f);
+    p.type = ParticleType::SmokeTrail;
+    p.color = ColorRgba { 180U, 180U, 190U, 200U };
+    p.active = true;
+}
+
+void ParticlePool::emitShockwave(WorldPos origin, std::size_t count) noexcept
+{
+    const std::size_t emitLimit { std::min(count, static_cast<std::size_t>(24U)) };
+    for (std::size_t i { 0U }; i < emitLimit; ++i) {
+        const std::size_t idx { allocateSlot() };
+        Particle& p { pool_[idx] };
+
+        const float angle { randomFloat(0.0f, kTwoPi) };
+        const float speed { randomFloat(150.0f, 320.0f) };
+
+        p.pos = origin;
+        p.vel = Velocity { std::cos(angle) * speed, std::sin(angle) * speed };
+        p.maxLifetime = randomFloat(0.25f, 0.45f);
+        p.lifetime = p.maxLifetime;
+        p.size = randomFloat(3.0f, 5.0f);
+        p.type = ParticleType::ShockwaveRing;
+        p.color = ColorRgba { 255U, 240U, 180U, 255U };
         p.active = true;
     }
 }

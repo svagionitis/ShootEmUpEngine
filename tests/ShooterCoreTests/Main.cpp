@@ -80,6 +80,26 @@ TEST(ShooterCoreTests, DeterminismSoak)
     ShooterCore::Test::runDeterminismSoakTests();
 }
 
+TEST(ShooterCoreTests, SecondaryArsenal)
+{
+    ShooterCore::Test::runSecondaryArsenalTests();
+}
+
+TEST(ShooterCoreTests, EnemyAi)
+{
+    ShooterCore::Test::runEnemyAiTests();
+}
+
+TEST(ShooterCoreTests, NestManager)
+{
+    ShooterCore::Test::runNestManagerTests();
+}
+
+TEST(ShooterCoreTests, SupplyDrop)
+{
+    ShooterCore::Test::runSupplyDropTests();
+}
+
 int main(int argc, char* argv[])
 {
     google::InitGoogleLogging(argv[0]);

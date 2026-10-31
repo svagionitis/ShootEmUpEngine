@@ -18,6 +18,8 @@ public:
     static constexpr std::uint16_t kTransform { 0x0020U };
     static constexpr std::uint16_t kFire { 0x0040U };
     static constexpr std::uint16_t kShield { 0x0080U };
+    static constexpr std::uint16_t kFireSecondary { 0x0100U };
+    static constexpr std::uint16_t kCycleWeapon { 0x0200U };
 
     constexpr EngineInput() noexcept = default;
 
@@ -81,6 +83,18 @@ public:
     [[nodiscard]] constexpr bool isShield() const noexcept
     {
         return (mask_ & kShield) != 0U;
+    }
+
+    /// @brief Check whether FireSecondary is pressed.
+    [[nodiscard]] constexpr bool isFireSecondary() const noexcept
+    {
+        return (mask_ & kFireSecondary) != 0U;
+    }
+
+    /// @brief Check whether CycleWeapon is pressed.
+    [[nodiscard]] constexpr bool isCycleWeapon() const noexcept
+    {
+        return (mask_ & kCycleWeapon) != 0U;
     }
 
     /// @brief Set a button bit in the bitmask.

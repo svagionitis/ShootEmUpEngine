@@ -114,6 +114,9 @@ void SdlRenderer::drawCommand(const ShooterCore::RenderCommand& cmd) noexcept
     case ShooterCore::RenderCommandType::DrawParticle:
         drawParticles(cmd);
         break;
+    case ShooterCore::RenderCommandType::DrawShockwave:
+        drawShockwave(cmd);
+        break;
     case ShooterCore::RenderCommandType::None:
     default:
         break;
@@ -239,6 +242,60 @@ void SdlRenderer::drawSprite(const ShooterCore::RenderCommand& cmd) noexcept
         (void)SDL_RenderDrawPoint(renderer_, px + 1, py);
         (void)SDL_RenderDrawPoint(renderer_, px, py + 1);
         (void)SDL_RenderDrawPoint(renderer_, px + 1, py + 1);
+        break;
+    }
+    case ShooterCore::SpriteId::MissileInFlight: {
+        (void)SDL_SetRenderDrawColor(renderer_, 255U, 180U, 40U, 255U);
+        const SDL_Rect mRect { toIntClamped(x) - 4, toIntClamped(y) - 2, 8, 4 };
+        (void)SDL_RenderFillRect(renderer_, &mRect);
+        break;
+    }
+    case ShooterCore::SpriteId::CanisterMissile:
+    case ShooterCore::SpriteId::CanisterBomb:
+    case ShooterCore::SpriteId::CanisterEnergy:
+    case ShooterCore::SpriteId::CanisterShield: {
+        if (cmd.sprite == ShooterCore::SpriteId::CanisterMissile) {
+            (void)SDL_SetRenderDrawColor(renderer_, 80U, 220U, 80U, 255U);
+        } else if (cmd.sprite == ShooterCore::SpriteId::CanisterBomb) {
+            (void)SDL_SetRenderDrawColor(renderer_, 255U, 140U, 20U, 255U);
+        } else if (cmd.sprite == ShooterCore::SpriteId::CanisterEnergy) {
+            (void)SDL_SetRenderDrawColor(renderer_, 60U, 200U, 255U, 255U);
+        } else {
+            (void)SDL_SetRenderDrawColor(renderer_, 220U, 80U, 255U, 255U);
+        }
+        const SDL_Rect cRect { toIntClamped(x) - 6, toIntClamped(y) - 6, 12, 12 };
+        (void)SDL_RenderFillRect(renderer_, &cRect);
+        break;
+    }
+    case ShooterCore::SpriteId::EnemyInterceptor: {
+        (void)SDL_SetRenderDrawColor(renderer_, 240U, 50U, 60U, 255U);
+        const SDL_Rect iRect { toIntClamped(x) - 8, toIntClamped(y) - 6, 16, 12 };
+        (void)SDL_RenderFillRect(renderer_, &iRect);
+        break;
+    }
+    case ShooterCore::SpriteId::EnemyCrawler1:
+    case ShooterCore::SpriteId::EnemyCrawler2: {
+        (void)SDL_SetRenderDrawColor(renderer_, 180U, 140U, 40U, 255U);
+        const SDL_Rect crRect { toIntClamped(x) - 6, toIntClamped(y) - 6, 12, 12 };
+        (void)SDL_RenderFillRect(renderer_, &crRect);
+        break;
+    }
+    case ShooterCore::SpriteId::EnemyTurretCeiling: {
+        (void)SDL_SetRenderDrawColor(renderer_, 160U, 40U, 180U, 255U);
+        const SDL_Rect tRect { toIntClamped(x) - 8, toIntClamped(y) - 4, 16, 10 };
+        (void)SDL_RenderFillRect(renderer_, &tRect);
+        break;
+    }
+    case ShooterCore::SpriteId::EnemyBulletHostile: {
+        (void)SDL_SetRenderDrawColor(renderer_, 255U, 60U, 60U, 255U);
+        const SDL_Rect bRect { toIntClamped(x) - 2, toIntClamped(y) - 2, 4, 4 };
+        (void)SDL_RenderFillRect(renderer_, &bRect);
+        break;
+    }
+    case ShooterCore::SpriteId::NestCoreActive: {
+        (void)SDL_SetRenderDrawColor(renderer_, 200U, 40U, 80U, 255U);
+        const SDL_Rect nRect { toIntClamped(x) - 14, toIntClamped(y) - 14, 28, 28 };
+        (void)SDL_RenderFillRect(renderer_, &nRect);
         break;
     }
     case ShooterCore::SpriteId::None:
@@ -629,6 +686,35 @@ void SdlRenderer::drawParticles(const ShooterCore::RenderCommand& cmd) noexcept
     } else {
         const SDL_Rect r { px, py, size, size };
         (void)SDL_RenderFillRect(renderer_, &r);
+    }
+
+    (void)SDL_SetRenderDrawBlendMode(renderer_, SDL_BLENDMODE_NONE);
+}
+
+void SdlRenderer::drawShockwave(const ShooterCore::RenderCommand& cmd) noexcept
+{
+    if (renderer_ == nullptr) {
+        return;
+    }
+
+    const int cx { toIntClamped(cmd.pos.x) };
+    const int cy { toIntClamped(cmd.pos.y) };
+    const float radius { cmd.width * 0.5f };
+
+    (void)SDL_SetRenderDrawBlendMode(renderer_, SDL_BLENDMODE_ADD);
+    (void)SDL_SetRenderDrawColor(renderer_, cmd.color.r, cmd.color.g, cmd.color.b, cmd.color.a);
+
+    constexpr std::size_t kSegments { 16U };
+    constexpr float kStep { 6.2831853f / static_cast<float>(kSegments) };
+
+    for (std::size_t s { 0U }; s < kSegments; ++s) {
+        const float a1 { static_cast<float>(s) * kStep };
+        const float a2 { static_cast<float>(s + 1U) * kStep };
+        const int x1 { cx + toIntClamped(std::cos(a1) * radius) };
+        const int y1 { cy + toIntClamped(std::sin(a1) * radius) };
+        const int x2 { cx + toIntClamped(std::cos(a2) * radius) };
+        const int y2 { cy + toIntClamped(std::sin(a2) * radius) };
+        (void)SDL_RenderDrawLine(renderer_, x1, y1, x2, y2);
     }
 
     (void)SDL_SetRenderDrawBlendMode(renderer_, SDL_BLENDMODE_NONE);
