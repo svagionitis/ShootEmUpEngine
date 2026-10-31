@@ -5,6 +5,7 @@
 
 #include <algorithm>
 
+#include "EgaBugLoader.h"
 #include "EngineInput.h"
 #include "EntitySpawner.h"
 #include "GameEngine.h"
@@ -47,16 +48,19 @@ void GameState::resetGame() noexcept
     stateTimer_ = 0.0f;
     warningTimer_ = 0.0f;
 
-    Level1Map::build(map_);
+    Level1Map::loadFromBinary(map_);
     engine_.initLevel(map_, Level1Map::getPlayerSpawn());
     spawner_.initLevel1Nests();
 
-    // Register Phase 11 Bio-Nest Generators in NestManager
+    // Register authentic alien nests from BUGDB01.BIN with fallback
     auto& nestMgr { engine_.getNestManager() };
-    nestMgr.addNest(ShooterCore::WorldPos { 280.0f, 140.0f }, 80U, 4.0f);
-    nestMgr.addNest(ShooterCore::WorldPos { 600.0f, 100.0f }, 80U, 3.5f);
-    nestMgr.addNest(ShooterCore::WorldPos { 900.0f, 180.0f }, 80U, 3.0f);
-    nestMgr.addNest(ShooterCore::WorldPos { 1200.0f, 120.0f }, 80U, 2.5f);
+    const std::size_t loadedNests { SdlAdapter::EgaBugLoader::loadBugDb("assets/thexder/BUGDB01.BIN", nestMgr) };
+    if (loadedNests == 0U) {
+        nestMgr.addNest(ShooterCore::WorldPos { 280.0f, 140.0f }, 80U, 4.0f);
+        nestMgr.addNest(ShooterCore::WorldPos { 600.0f, 100.0f }, 80U, 3.5f);
+        nestMgr.addNest(ShooterCore::WorldPos { 900.0f, 180.0f }, 80U, 3.0f);
+        nestMgr.addNest(ShooterCore::WorldPos { 1200.0f, 120.0f }, 80U, 2.5f);
+    }
 
     // Seed Tactical Ceiling Turrets and Wall Crawlers
     engine_.spawnEnemy(ShooterCore::EntityType::CeilingTurret, ShooterCore::WorldPos { 400.0f, 32.0f },

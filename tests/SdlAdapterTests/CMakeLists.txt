@@ -4,6 +4,8 @@ add_executable(SdlAdapterTests
     TestCanvasScaler.cpp
     TestCrtPostProcessor.cpp
     TestEgaAssetLoader.cpp
+    TestEgaBugLoader.cpp
+    TestEgaMapLoader.cpp
     TestEgaRobotLoader.cpp
     TestMusicTracker.cpp
     TestSarArchiveReader.cpp
@@ -52,5 +54,7 @@ register_sdladapter_test(SdlAdapter_Tracker   SdlTracker   "unit;audio;tracker" 
 register_sdladapter_test(SdlAdapter_CanvasScaler   CanvasScaler   "unit;scaling;sdl"   10)
 register_sdladapter_test(SdlAdapter_CrtPostProcessor CrtPostProcessor "unit;crt;sdl" 10)
 register_sdladapter_test(SdlAdapter_EgaAssetLoader EgaAssetLoader "unit;asset;ega;sdl" 10)
+register_sdladapter_test(SdlAdapter_EgaBugLoader EgaBugLoader "unit;asset;bug;sdl" 10)
+register_sdladapter_test(SdlAdapter_EgaMapLoader EgaMapLoader "unit;asset;map;sdl" 10)
 register_sdladapter_test(SdlAdapter_EgaRobotLoader EgaRobotLoader "unit;asset;robot;sdl" 10)
 register_sdladapter_test(SdlAdapter_SarArchiveReader SarArchiveReader "unit;asset;sar;sdl" 10)

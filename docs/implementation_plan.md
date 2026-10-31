@@ -570,6 +570,7 @@ flowchart TD
 
 ### Phase 16: Authentic Thexder 1 Level Ingestion, Auto-Aiming Laser & Bottom HUD Realignment
 - **Objective**: Achieve 1:1 gameplay parity with the original 1987 Thexder DOS release.
+- **Detailed Plan**: See [docs/phase16_plan.md](phase16_plan.md) for full architectural and implementation specifications.
 - **Reference**: See detailed gameplay and level analysis in [thexder_firehawk_dos_investigation.md](thexder_firehawk_dos_investigation.md).
 - **Key Deliverables**:
   - **Authentic World 1 Map Ingestion (`apps/ThexderGame/Level1Map.cpp`)**:

@@ -79,6 +79,8 @@ void runMusicTrackerTests() noexcept;
 void runCanvasScalerTests() noexcept;
 void runCrtPostProcessorTests() noexcept;
 void runEgaAssetLoaderTests() noexcept;
+void runEgaBugLoaderTests() noexcept;
+void runEgaMapLoaderTests() noexcept;
 void runEgaRobotLoaderTests() noexcept;
 void runSarArchiveReaderTests() noexcept;
 

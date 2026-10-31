@@ -10,10 +10,13 @@
 namespace ThexderGame {
 
 /// @class HudOverlay
-/// @brief Formats and renders screen-space player metrics, gauges, and retro text.
+/// @brief Formats and renders authentic Thexder bottom console status metrics, gauges, and retro text.
 /// @details Emits render commands directly to RenderCommandQueue with zero heap allocations (CERT ERR55-CPP).
 class HudOverlay final {
 public:
+    static constexpr float kConsoleStartY { 202.0f };
+    static constexpr float kConsoleHeight { 38.0f };
+
     HudOverlay() noexcept = default;
 
     /// @brief Emit all HUD graphics and text strings into the render command queue.

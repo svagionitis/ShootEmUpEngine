@@ -9,6 +9,10 @@ add_library(SdlAdapter STATIC
     CrtPostProcessor.h
     EgaAssetLoader.cpp
     EgaAssetLoader.h
+    EgaBugLoader.cpp
+    EgaBugLoader.h
+    EgaMapLoader.cpp
+    EgaMapLoader.h
     EgaRobotLoader.cpp
     EgaRobotLoader.h
     MusicTracker.cpp

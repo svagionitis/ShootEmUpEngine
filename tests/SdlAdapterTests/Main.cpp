@@ -63,6 +63,16 @@ TEST(SdlAdapterTests, EgaAssetLoader)
     SdlAdapter::Test::runEgaAssetLoaderTests();
 }
 
+TEST(SdlAdapterTests, EgaBugLoader)
+{
+    SdlAdapter::Test::runEgaBugLoaderTests();
+}
+
+TEST(SdlAdapterTests, EgaMapLoader)
+{
+    SdlAdapter::Test::runEgaMapLoaderTests();
+}
+
 TEST(SdlAdapterTests, EgaRobotLoader)
 {
     SdlAdapter::Test::runEgaRobotLoaderTests();
@@ -111,6 +121,10 @@ int main(int argc, char* argv[])
                 suiteName = "CrtPostProcessor";
             } else if (suiteName == "EgaAssetLoader") {
                 suiteName = "EgaAssetLoader";
+            } else if (suiteName == "EgaBugLoader") {
+                suiteName = "EgaBugLoader";
+            } else if (suiteName == "EgaMapLoader") {
+                suiteName = "EgaMapLoader";
             } else if (suiteName == "EgaRobotLoader") {
                 suiteName = "EgaRobotLoader";
             } else if (suiteName == "SarArchiveReader") {
