@@ -58,6 +58,37 @@ void runCameraSystemTests() noexcept
 
     camera.unlockArena();
     TEST_ASSERT(!camera.isLocked(), "Camera must be unlocked");
+
+    // 7. Trauma & Screen Shake System
+    TEST_ASSERT(!camera.trauma().isActive(), "Initial trauma must be inactive");
+    TEST_ASSERT_NEAR(camera.trauma().value(), 0.0f, 0.001f, "Initial trauma value must be 0");
+    TEST_ASSERT_NEAR(camera.trauma().magnitude(), 0.0f, 0.001f, "Initial trauma magnitude must be 0");
+
+    ShakeOffset zeroShake { camera.computeShakeOffset() };
+    TEST_ASSERT_NEAR(zeroShake.x, 0.0f, 0.001f, "Zero trauma yields zero shake X");
+    TEST_ASSERT_NEAR(zeroShake.y, 0.0f, 0.001f, "Zero trauma yields zero shake Y");
+
+    // Add trauma
+    camera.addTrauma(0.5f);
+    TEST_ASSERT(camera.trauma().isActive(), "Trauma must be active after adding 0.5");
+    TEST_ASSERT_NEAR(camera.trauma().value(), 0.5f, 0.001f, "Trauma must be 0.5");
+    TEST_ASSERT_NEAR(camera.trauma().magnitude(), 0.25f, 0.001f, "Trauma magnitude must be 0.25 (0.5^2)");
+
+    // Clamping to 1.0
+    camera.addTrauma(0.8f);
+    TEST_ASSERT_NEAR(camera.trauma().value(), 1.0f, 0.001f, "Trauma must clamp at 1.0");
+    TEST_ASSERT_NEAR(camera.trauma().magnitude(), 1.0f, 0.001f, "Max trauma magnitude must be 1.0");
+
+    // Advance time and check shake offset displacement
+    camera.updateTrauma(DeltaTime { 0.1f });
+    ShakeOffset activeShake { camera.computeShakeOffset() };
+    TEST_ASSERT(std::abs(activeShake.x) <= CameraSystem::kMaxShakeX, "Shake X must be bounded by kMaxShakeX");
+    TEST_ASSERT(std::abs(activeShake.y) <= CameraSystem::kMaxShakeY, "Shake Y must be bounded by kMaxShakeY");
+
+    // Decay test: decaying with 1.5/sec for 1.0 second should reduce trauma to 0
+    camera.updateTrauma(DeltaTime { 1.0f });
+    TEST_ASSERT(!camera.trauma().isActive(), "Trauma must decay to zero after 1s");
+    TEST_ASSERT_NEAR(camera.trauma().value(), 0.0f, 0.001f, "Decayed trauma value must be 0");
 }
 
 } // namespace ShooterCore::Test

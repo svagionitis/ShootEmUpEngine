@@ -330,7 +330,11 @@ void GameEngine::updateWeapons(DeltaTime dt, EngineInput input) noexcept
 
     // 6. Secondary Arsenal & Tactical AI
     if (input.isFireSecondary()) {
-        secondaryArsenal_.triggerFire(playerPos_, playerFacing_, entities_, audioQueue_, particlePool_);
+        const bool fired { secondaryArsenal_.triggerFire(
+            playerPos_, playerFacing_, entities_, audioQueue_, particlePool_) };
+        if (fired && secondaryArsenal_.activeWeapon() == SecondaryWeaponType::FlashBomb) {
+            cameraSys_.addTrauma(0.8f);
+        }
     }
 
     secondaryArsenal_.update(dt, entities_, map_, particlePool_, audioQueue_);
@@ -375,6 +379,7 @@ void GameEngine::updateEntities(DeltaTime dt) noexcept
                 particlePool_.emitShieldSparks(ent.pos, 0.0f, 8U);
             } else {
                 energy_.deduct(EnergyPoints { dmg.value() });
+                cameraSys_.addTrauma(0.4f);
                 audioQueue_.pushSound(SoundEffectId::PlayerDamage);
                 particlePool_.emitSparks(playerPos_, 0.0f, 6U);
                 if (energy_.isDepleted()) {

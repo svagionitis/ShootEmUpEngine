@@ -5,9 +5,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 #include <SDL.h>
 
+#include "CanvasScaler.h"
+#include "CrtPostProcessor.h"
 #include "RenderCommandQueue.h"
 #include "SpriteAtlas.h"
 #include "Types.h"
@@ -31,13 +34,75 @@ namespace {
 
 } // namespace
 
+SdlRenderer::~SdlRenderer() noexcept
+{
+    if (targetTexture_ != nullptr) {
+        SDL_DestroyTexture(targetTexture_);
+        targetTexture_ = nullptr;
+    }
+}
+
+SdlRenderer::SdlRenderer(SdlRenderer&& other) noexcept
+    : renderer_ { other.renderer_ }
+    , targetTexture_ { other.targetTexture_ }
+    , atlas_ { std::move(other.atlas_) }
+    , crtProcessor_ { std::move(other.crtProcessor_) }
+    , aspectMode_ { other.aspectMode_ }
+    , activeQueue_ { other.activeQueue_ }
+{
+    other.renderer_ = nullptr;
+    other.targetTexture_ = nullptr;
+    other.activeQueue_ = nullptr;
+}
+
+SdlRenderer& SdlRenderer::operator=(SdlRenderer&& other) noexcept
+{
+    if (this != &other) {
+        if (targetTexture_ != nullptr) {
+            SDL_DestroyTexture(targetTexture_);
+        }
+        renderer_ = other.renderer_;
+        targetTexture_ = other.targetTexture_;
+        atlas_ = std::move(other.atlas_);
+        crtProcessor_ = std::move(other.crtProcessor_);
+        aspectMode_ = other.aspectMode_;
+        activeQueue_ = other.activeQueue_;
+
+        other.renderer_ = nullptr;
+        other.targetTexture_ = nullptr;
+        other.activeQueue_ = nullptr;
+    }
+    return *this;
+}
+
+ShooterCore::AspectRatioMode SdlRenderer::cycleAspectMode() noexcept
+{
+    const auto curVal { static_cast<std::uint8_t>(aspectMode_) };
+    const std::uint8_t nextVal { static_cast<std::uint8_t>((curVal + 1U) % 3U) };
+    aspectMode_ = static_cast<ShooterCore::AspectRatioMode>(nextVal);
+    return aspectMode_;
+}
+
 void SdlRenderer::attachRenderer(SDL_Renderer* renderer) noexcept
 {
+    if (targetTexture_ != nullptr) {
+        SDL_DestroyTexture(targetTexture_);
+        targetTexture_ = nullptr;
+    }
+
     renderer_ = renderer;
     if (renderer_ != nullptr) {
         (void)atlas_.init(renderer_);
+        (void)crtProcessor_.init(renderer_);
+
+        // Allocate 320x240 native offscreen render target
+        targetTexture_ = SDL_CreateTexture(renderer_, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 320, 240);
+        if (targetTexture_ != nullptr) {
+            (void)SDL_SetTextureBlendMode(targetTexture_, SDL_BLENDMODE_BLEND);
+        }
     } else {
         atlas_.shutdown();
+        crtProcessor_.shutdown();
     }
 }
 
@@ -74,16 +139,41 @@ void SdlRenderer::renderFrame(const ShooterCore::RenderCommandQueue& queue) noex
         return;
     }
 
-    clearScreen();
+    if (targetTexture_ != nullptr) {
+        // Direct drawing to 320x240 native offscreen target
+        (void)SDL_SetRenderTarget(renderer_, targetTexture_);
+        clearScreen();
 
-    activeQueue_ = &queue;
-    const std::size_t cmdCount { queue.count() };
-    for (std::size_t i { 0U }; i < cmdCount; ++i) {
-        drawCommand(queue.get(i));
+        activeQueue_ = &queue;
+        const std::size_t cmdCount { queue.count() };
+        for (std::size_t i { 0U }; i < cmdCount; ++i) {
+            drawCommand(queue.get(i));
+        }
+        activeQueue_ = nullptr;
+
+        // Apply optical CRT filter (scanlines, aperture grille, vignette)
+        crtProcessor_.render(renderer_);
+
+        // Present to physical window with integer aspect ratio letterboxing
+        int winW { 320 };
+        int winH { 240 };
+        (void)SDL_GetRendererOutputSize(renderer_, &winW, &winH);
+        CanvasScaler::presentCanvas(renderer_, targetTexture_, winW, winH, aspectMode_);
+        present();
+    } else {
+        // Fallback for mock/dummy test renderers where target textures are unsupported
+        clearScreen();
+
+        activeQueue_ = &queue;
+        const std::size_t cmdCount { queue.count() };
+        for (std::size_t i { 0U }; i < cmdCount; ++i) {
+            drawCommand(queue.get(i));
+        }
+        activeQueue_ = nullptr;
+
+        crtProcessor_.render(renderer_);
+        present();
     }
-    activeQueue_ = nullptr;
-
-    present();
 }
 
 void SdlRenderer::drawCommand(const ShooterCore::RenderCommand& cmd) noexcept

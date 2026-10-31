@@ -63,10 +63,25 @@ void runHudOverlayTests()
     // 4. Low energy alert rendering
     queue.clear();
     hud.renderHud(queue, ShooterCore::EnergyPoints { 10U }, ShooterCore::ShieldGauge { 50U }, 12500U, 50000U,
-        ShooterCore::TransformMode::Jet, 0.1f);
+        ShooterCore::TransformMode::Jet, 0.1f, ShooterCore::SecondaryWeaponType::HomingMissile, 4U, "SEC 02: FLUES",
+        true);
 
     TEST_ASSERT(queue.count() > 0U, "Low-energy HUD must render commands");
     TEST_ASSERT(queue.count() < ShooterCore::RenderCommandQueue::kCapacity, "Low energy HUD must fit within capacity");
+
+    // 5. Segmented Bar Unit Test
+    queue.clear();
+    const ShooterCore::ColorRgba litCol { 0U, 255U, 200U, 255U };
+    const ShooterCore::ColorRgba unlitCol { 10U, 20U, 30U, 180U };
+    HudOverlay::drawSegmentedBar(queue, 10.0f, 10.0f, 24U, 12U, litCol, unlitCol);
+    TEST_ASSERT_EQ(queue.count(), 24U, "drawSegmentedBar must push exactly 24 commands");
+
+    for (std::size_t i { 0U }; i < 12U; ++i) {
+        TEST_ASSERT_EQ(queue.get(i).color.r, litCol.r, "First 12 segments must be illuminated");
+    }
+    for (std::size_t i { 12U }; i < 24U; ++i) {
+        TEST_ASSERT_EQ(queue.get(i).color.r, unlitCol.r, "Remaining 12 segments must be unlit cathode trace");
+    }
 }
 
 } // namespace ThexderGame::Test

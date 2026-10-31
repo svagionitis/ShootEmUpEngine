@@ -82,6 +82,24 @@ public:
         return godMode_;
     }
 
+    /// @brief Enable or disable screen shake effect.
+    constexpr void setScreenShakeEnabled(bool enable) noexcept
+    {
+        screenShakeEnabled_ = enable;
+    }
+
+    /// @brief Toggle screen shake effect state.
+    constexpr void toggleScreenShake() noexcept
+    {
+        screenShakeEnabled_ = !screenShakeEnabled_;
+    }
+
+    /// @brief Query whether screen shake is enabled.
+    [[nodiscard]] constexpr bool isScreenShakeEnabled() const noexcept
+    {
+        return screenShakeEnabled_;
+    }
+
     /// @brief Query viewport camera.
     [[nodiscard]] constexpr ShooterCore::CameraViewport getCamera() const noexcept
     {
@@ -115,6 +133,7 @@ private:
     float stateTimer_ { 0.0f };
     float warningTimer_ { 0.0f };
     bool godMode_ { false };
+    bool screenShakeEnabled_ { true };
     bool pausePressedPrev_ { false };
 };
 

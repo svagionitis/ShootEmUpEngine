@@ -207,7 +207,10 @@ void GameState::buildRenderQueue(ShooterCore::RenderCommandQueue& outQueue) noex
         return;
     }
 
-    // 1. World draw commands translated to screen coordinates
+    // 1. World draw commands translated to screen coordinates with camera trauma shake
+    const ShooterCore::WorldPos effectiveCam { screenShakeEnabled_ ? engine_.getCameraSystem().effectivePosition()
+                                                                   : camera_.pos };
+
     const ShooterCore::RenderCommandQueue& wq { engine_.getRenderQueue() };
     const std::size_t wcmdCount { wq.count() };
 
@@ -215,29 +218,29 @@ void GameState::buildRenderQueue(ShooterCore::RenderCommandQueue& outQueue) noex
         const ShooterCore::RenderCommand& cmd { wq.get(i) };
 
         if (cmd.type == ShooterCore::RenderCommandType::DrawTile) {
-            const float sx { cmd.pos.x - camera_.pos.x };
-            const float sy { cmd.pos.y - camera_.pos.y };
+            const float sx { cmd.pos.x - effectiveCam.x };
+            const float sy { cmd.pos.y - effectiveCam.y };
             if (sx >= -16.0f && sx <= kViewWidth && sy >= -16.0f && sy <= kViewHeight) {
                 (void)outQueue.pushTile(cmd.tileType, ShooterCore::WorldPos { sx, sy }, cmd.layer);
             }
         } else if (cmd.type == ShooterCore::RenderCommandType::DrawSprite) {
-            const float sx { cmd.pos.x - camera_.pos.x };
-            const float sy { cmd.pos.y - camera_.pos.y };
+            const float sx { cmd.pos.x - effectiveCam.x };
+            const float sy { cmd.pos.y - effectiveCam.y };
             if (sx >= -48.0f && sx <= kViewWidth + 32.0f && sy >= -48.0f && sy <= kViewHeight + 32.0f) {
                 (void)outQueue.pushSprite(
                     cmd.sprite, ShooterCore::WorldPos { sx, sy }, cmd.facing, cmd.layer, cmd.rotationDegrees);
             }
         } else if (cmd.type == ShooterCore::RenderCommandType::DrawBeam) {
-            const float sx0 { cmd.pos.x - camera_.pos.x };
-            const float sy0 { cmd.pos.y - camera_.pos.y };
-            const float sx1 { cmd.endpoint.x - camera_.pos.x };
-            const float sy1 { cmd.endpoint.y - camera_.pos.y };
+            const float sx0 { cmd.pos.x - effectiveCam.x };
+            const float sy0 { cmd.pos.y - effectiveCam.y };
+            const float sx1 { cmd.endpoint.x - effectiveCam.x };
+            const float sy1 { cmd.endpoint.y - effectiveCam.y };
             (void)outQueue.pushBeam(ShooterCore::WorldPos { sx0, sy0 }, ShooterCore::WorldPos { sx1, sy1 }, cmd.color);
         } else if (cmd.type == ShooterCore::RenderCommandType::DrawBar) {
             // Shield barrier has height > 10
             if (cmd.height > 10.0f) {
-                const float sx { cmd.pos.x - camera_.pos.x };
-                const float sy { cmd.pos.y - camera_.pos.y };
+                const float sx { cmd.pos.x - effectiveCam.x };
+                const float sy { cmd.pos.y - effectiveCam.y };
                 (void)outQueue.pushBar(ShooterCore::WorldPos { sx, sy }, cmd.width, cmd.height, cmd.fillPct, cmd.color);
             }
         }
@@ -246,8 +249,8 @@ void GameState::buildRenderQueue(ShooterCore::RenderCommandQueue& outQueue) noex
     // 2. Generator nests
     for (std::size_t i { 0U }; i < spawner_.nestCount(); ++i) {
         const SpawnerNode& nest { spawner_.getNest(i) };
-        const float sx { nest.pos.x - camera_.pos.x };
-        const float sy { nest.pos.y - camera_.pos.y };
+        const float sx { nest.pos.x - effectiveCam.x };
+        const float sy { nest.pos.y - effectiveCam.y };
         if (sx >= -32.0f && sx <= kViewWidth && sy >= -32.0f && sy <= kViewHeight) {
             const ShooterCore::SpriteId nestSpr { nest.destroyed ? ShooterCore::SpriteId::NestCoreDestroyed
                                                                  : ShooterCore::SpriteId::NestCoreActive };
@@ -258,8 +261,8 @@ void GameState::buildRenderQueue(ShooterCore::RenderCommandQueue& outQueue) noex
 
     // 3. Extraction Gate / Exit Portal
     const ShooterCore::WorldPos eport { Level1Map::getExitPortal() };
-    const float esx { eport.x - camera_.pos.x };
-    const float esy { eport.y - camera_.pos.y };
+    const float esx { eport.x - effectiveCam.x };
+    const float esy { eport.y - effectiveCam.y };
     if (esx >= -32.0f && esx <= kViewWidth && esy >= -48.0f && esy <= kViewHeight) {
         outQueue.pushBar(ShooterCore::WorldPos { esx, esy - 16.0f }, 16.0f, 32.0f, 1.0f,
             ShooterCore::ColorRgba { 50U, 240U, 120U, 200U });

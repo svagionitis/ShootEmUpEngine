@@ -11,6 +11,10 @@ namespace SdlAdapter {
 bool SdlInput::pollEvents() noexcept
 {
     previousInput_ = currentInput_;
+    f1Pressed_ = false;
+    f2Pressed_ = false;
+    f3Pressed_ = false;
+    f11Pressed_ = false;
 
     SDL_Event event { };
     while (SDL_PollEvent(&event) != 0) {
@@ -104,6 +108,30 @@ void SdlInput::handleKeyEvent(std::int32_t keycode, bool isDown) noexcept
     case SDLK_ESCAPE:
         if (isDown) {
             quitRequested_ = true;
+        }
+        return;
+
+    case SDLK_F1:
+        if (isDown) {
+            f1Pressed_ = true;
+        }
+        return;
+
+    case SDLK_F2:
+        if (isDown) {
+            f2Pressed_ = true;
+        }
+        return;
+
+    case SDLK_F3:
+        if (isDown) {
+            f3Pressed_ = true;
+        }
+        return;
+
+    case SDLK_F11:
+        if (isDown) {
+            f11Pressed_ = true;
         }
         return;
 

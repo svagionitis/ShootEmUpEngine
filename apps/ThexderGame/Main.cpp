@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
 
@@ -20,13 +21,16 @@ DEFINE_bool(mute, false, "Mute procedural chiptune synthesizer");
 DEFINE_bool(godmode, false, "Invulnerable player craft for test navigation");
 DEFINE_bool(headless, false, "Run in headless mode for automated verification");
 DEFINE_int32(frames, 60, "Number of frames to simulate before exiting in headless mode");
+DEFINE_int32(crt_mode, 2, "CRT optical filter profile (0=Off, 1=Subtle, 2=Arcade, 3=RetroCrt)");
+DEFINE_bool(integer_scale, true, "Force pixel-perfect integer aspect ratio scaling");
+DEFINE_bool(screen_shake, true, "Enable camera trauma and kinetic screen shake");
 
 int main(int argc, char* argv[])
 {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
     google::InitGoogleLogging(argv[0]);
 
-    LOG(INFO) << "Starting Thexder Game Engine (Phase 8)...";
+    LOG(INFO) << "Starting Thexder Game Engine (Phase 14)...";
 
     SdlAdapter::SdlWindow window;
     SdlAdapter::WindowConfig winConfig;
@@ -45,6 +49,11 @@ int main(int argc, char* argv[])
     SdlAdapter::SdlRenderer renderer;
     renderer.attachRenderer(window.getRenderer());
 
+    const auto crtModeVal { static_cast<ShooterCore::CrtFilterMode>(std::clamp(FLAGS_crt_mode, 0, 3)) };
+    renderer.setCrtFilterMode(crtModeVal);
+    renderer.setAspectRatioMode(
+        FLAGS_integer_scale ? ShooterCore::AspectRatioMode::IntegerOnly : ShooterCore::AspectRatioMode::UniformFit);
+
     SdlAdapter::SdlAudio audio;
     if (!FLAGS_mute) {
         if (!audio.init()) {
@@ -58,6 +67,7 @@ int main(int argc, char* argv[])
     SdlAdapter::TimePacer pacer;
     ThexderGame::GameState game;
     game.setGodMode(FLAGS_godmode);
+    game.setScreenShakeEnabled(FLAGS_screen_shake);
 
     ShooterCore::RenderCommandQueue frameQueue;
 
@@ -74,6 +84,24 @@ int main(int argc, char* argv[])
         if (input.quitRequested()) {
             running = false;
             break;
+        }
+
+        // Phase 14 Runtime Hotkeys: F1 (CRT), F2 (Aspect Scale), F3 (Screen Shake), F11 (Fullscreen)
+        if (input.isCrtToggle()) {
+            const ShooterCore::CrtFilterMode nextCrt { renderer.cycleCrtMode() };
+            LOG(INFO) << "Toggled CRT filter profile: " << static_cast<int>(nextCrt);
+        }
+        if (input.isScaleToggle()) {
+            const ShooterCore::AspectRatioMode nextScale { renderer.cycleAspectMode() };
+            LOG(INFO) << "Toggled Aspect Ratio scaling: " << static_cast<int>(nextScale);
+        }
+        if (input.isShakeToggle()) {
+            game.toggleScreenShake();
+            LOG(INFO) << "Toggled Screen Shake: " << (game.isScreenShakeEnabled() ? "ENABLED" : "DISABLED");
+        }
+        if (input.isFullscreenToggle()) {
+            window.toggleFullscreen();
+            LOG(INFO) << "Toggled Fullscreen mode.";
         }
 
         const std::uint32_t ticks { pacer.beginFrame() };
@@ -99,6 +127,7 @@ int main(int argc, char* argv[])
     if (!FLAGS_mute) {
         audio.shutdown();
     }
+    renderer.attachRenderer(nullptr);
     window.shutdown();
 
     LOG(INFO) << "Thexder Game terminated cleanly.";

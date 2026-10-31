@@ -65,6 +65,42 @@ void CameraSystem::update(DeltaTime dt, WorldPos playerPos, const SectorBounds& 
 
     viewport_.pos.x = std::clamp(viewport_.pos.x, activeBounds.min.x, maxX);
     viewport_.pos.y = std::clamp(viewport_.pos.y, activeBounds.min.y, maxY);
+
+    updateTrauma(dt);
+}
+
+void CameraSystem::updateTrauma(DeltaTime dt) noexcept
+{
+    const float dtSec { dt.seconds() };
+    if (trauma_.isActive()) {
+        shakeTime_ += dtSec;
+        trauma_.decay(dtSec, 1.5f);
+    } else {
+        shakeTime_ = 0.0f;
+    }
+}
+
+ShakeOffset CameraSystem::computeShakeOffset() const noexcept
+{
+    if (!trauma_.isActive()) {
+        return ShakeOffset { 0.0f, 0.0f, 0.0f };
+    }
+
+    const float mag { trauma_.magnitude() };
+    const float t { shakeTime_ };
+
+    // Deterministic harmonic multi-frequency pseudo-random noise synthesis
+    const float noiseX { (std::sin(t * 43.7f) * 0.6f) + (std::sin(t * 97.1f) * 0.4f) };
+    const float noiseY { (std::cos(t * 51.3f) * 0.6f) + (std::cos(t * 89.4f) * 0.4f) };
+    const float noiseAng { (std::sin(t * 31.9f) * 0.7f) + (std::cos(t * 67.2f) * 0.3f) };
+
+    return ShakeOffset { mag * kMaxShakeX * noiseX, mag * kMaxShakeY * noiseY, mag * kMaxShakeAngle * noiseAng };
+}
+
+WorldPos CameraSystem::effectivePosition() const noexcept
+{
+    const ShakeOffset shake { computeShakeOffset() };
+    return WorldPos { viewport_.pos.x + shake.x, viewport_.pos.y + shake.y };
 }
 
 } // namespace ShooterCore

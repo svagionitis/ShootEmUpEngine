@@ -48,6 +48,16 @@ TEST(SdlAdapterTests, MusicTracker)
     SdlAdapter::Test::runMusicTrackerTests();
 }
 
+TEST(SdlAdapterTests, CanvasScaler)
+{
+    SdlAdapter::Test::runCanvasScalerTests();
+}
+
+TEST(SdlAdapterTests, CrtPostProcessor)
+{
+    SdlAdapter::Test::runCrtPostProcessorTests();
+}
+
 int main(int argc, char* argv[])
 {
     SDL_SetMainReady();
@@ -80,6 +90,10 @@ int main(int argc, char* argv[])
                 suiteName = "AdsrEnvelope";
             } else if (suiteName == "SdlTracker") {
                 suiteName = "MusicTracker";
+            } else if (suiteName == "CanvasScaler") {
+                suiteName = "CanvasScaler";
+            } else if (suiteName == "CrtPostProcessor") {
+                suiteName = "CrtPostProcessor";
             }
             const std::string suiteFilter { std::string("SdlAdapterTests.") + suiteName };
             ::testing::GTEST_FLAG(filter) = suiteFilter;

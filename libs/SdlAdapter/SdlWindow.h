@@ -54,6 +54,13 @@ public:
     /// @return true if both window and renderer are valid.
     [[nodiscard]] bool isValid() const noexcept;
 
+    /// @brief Toggle between windowed mode and desktop fullscreen.
+    void toggleFullscreen() noexcept;
+
+    /// @brief Query whether window is currently in fullscreen mode.
+    /// @return true if fullscreen desktop flag is active.
+    [[nodiscard]] bool isFullscreen() const noexcept;
+
 private:
     SDL_Window* window_ { nullptr };
     SDL_Renderer* renderer_ { nullptr };

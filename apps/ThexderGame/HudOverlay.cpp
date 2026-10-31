@@ -156,74 +156,119 @@ void HudOverlay::drawText(ShooterCore::RenderCommandQueue& queue, std::string_vi
     }
 }
 
+void HudOverlay::drawSegmentedBar(ShooterCore::RenderCommandQueue& queue, float startX, float startY,
+    std::uint8_t totalSegments, std::uint8_t litSegments, ShooterCore::ColorRgba litColor,
+    ShooterCore::ColorRgba unlitColor) noexcept
+{
+    const std::uint8_t clampedLit { std::min(litSegments, totalSegments) };
+    for (std::uint8_t i { 0U }; i < totalSegments; ++i) {
+        const float segX { startX + static_cast<float>(i) * 3.0f };
+        const ShooterCore::ColorRgba col { (i < clampedLit) ? litColor : unlitColor };
+        queue.pushBar(ShooterCore::WorldPos { segX, startY }, 2.0f, 6.0f, 1.0f, col);
+    }
+}
+
 void HudOverlay::renderHud(ShooterCore::RenderCommandQueue& queue, ShooterCore::EnergyPoints energy,
     ShooterCore::ShieldGauge shield, std::uint32_t score, std::uint32_t hiScore, ShooterCore::TransformMode mode,
-    float warningTimer, ShooterCore::SecondaryWeaponType secType, std::uint8_t secAmmo) noexcept
+    float warningTimer, ShooterCore::SecondaryWeaponType secType, std::uint8_t secAmmo, std::string_view sectorName,
+    bool lockWarning) noexcept
 {
-    // Layer 20: Screen-Space HUD Presentation
-    const ShooterCore::ColorRgba bgHud { 10U, 14U, 24U, 220U };
+    // Layer 20: Cockpit Canopy & Segmented LED HUD Presentation
+    const ShooterCore::ColorRgba bgCockpit { 14U, 18U, 28U, 245U };
+    const ShooterCore::ColorRgba bezelBorder { 48U, 60U, 82U, 255U };
+    const ShooterCore::ColorRgba rivetColor { 150U, 175U, 210U, 255U };
+    const ShooterCore::ColorRgba strutBase { 22U, 28U, 42U, 240U };
+    const ShooterCore::ColorRgba strutGlare { 65U, 80U, 110U, 180U };
+
     const ShooterCore::ColorRgba txtWhite { 240U, 245U, 255U, 255U };
     const ShooterCore::ColorRgba txtCyan { 40U, 220U, 255U, 255U };
     const ShooterCore::ColorRgba txtGold { 255U, 210U, 40U, 255U };
     const ShooterCore::ColorRgba txtAlert { 255U, 50U, 40U, 255U };
+    const ShooterCore::ColorRgba unlitCathode { 12U, 24U, 34U, 190U };
 
-    // 1. Top HUD bar backdrop
-    queue.pushBar(ShooterCore::WorldPos { 0.0f, 0.0f }, 320.0f, 15.0f, 1.0f, bgHud);
+    // 1. Molded Top Canopy Frame & Bezel (Y: 0 to 16 px)
+    queue.pushBar(ShooterCore::WorldPos { 0.0f, 0.0f }, 320.0f, 16.0f, 1.0f, bgCockpit);
+    queue.pushBar(ShooterCore::WorldPos { 0.0f, 15.0f }, 320.0f, 1.0f, 1.0f, bezelBorder);
 
-    // 2. Energy meter
-    drawText(queue, "EN", 4.0f, 4.0f, 1U, txtCyan);
-    const float energyPct { static_cast<float>(energy.value())
-        / static_cast<float>(ShooterCore::EnergyPoints::kDefaultMax) };
-    ShooterCore::ColorRgba enColor { 0U, 220U, 255U, 255U };
-    if (energy.value() <= 20U) {
-        enColor = txtAlert;
-    } else if (energy.value() <= 50U) {
-        enColor = txtGold;
+    // Corner Rivet Studs
+    queue.pushBar(ShooterCore::WorldPos { 2.0f, 2.0f }, 2.0f, 2.0f, 1.0f, rivetColor);
+    queue.pushBar(ShooterCore::WorldPos { 316.0f, 2.0f }, 2.0f, 2.0f, 1.0f, rivetColor);
+
+    // 2. Left & Right Vertical Canopy Struts (Y: 16 to 222 px)
+    queue.pushBar(ShooterCore::WorldPos { 0.0f, 16.0f }, 2.0f, 206.0f, 1.0f, strutBase);
+    queue.pushBar(ShooterCore::WorldPos { 1.0f, 16.0f }, 1.0f, 206.0f, 1.0f, strutGlare);
+    queue.pushBar(ShooterCore::WorldPos { 318.0f, 16.0f }, 2.0f, 206.0f, 1.0f, strutBase);
+    queue.pushBar(ShooterCore::WorldPos { 318.0f, 16.0f }, 1.0f, 206.0f, 1.0f, strutGlare);
+
+    // 3. Energy Instrument: 24-Segment LED Ladder Meter
+    drawText(queue, "EN", 6.0f, 5.0f, 1U, txtCyan);
+
+    const std::uint16_t enVal { energy.value() };
+    const auto enRawLit { static_cast<std::uint8_t>(
+        (static_cast<std::uint32_t>(enVal) * 24U + 50U) / ShooterCore::EnergyPoints::kDefaultMax) };
+    const std::uint8_t enLit { (enVal > 0U && enRawLit == 0U) ? static_cast<std::uint8_t>(1U)
+                                                              : std::min(enRawLit, static_cast<std::uint8_t>(24U)) };
+
+    ShooterCore::ColorRgba enLitColor { 0U, 230U, 195U, 255U };
+    if (enVal <= 20U) {
+        const auto alertPhase { static_cast<std::uint32_t>(warningTimer * 4.0f) };
+        enLitColor = ((alertPhase % 2U) == 0U) ? txtAlert : ShooterCore::ColorRgba { 180U, 30U, 30U, 200U };
+    } else if (enVal <= 50U) {
+        enLitColor = txtGold;
     }
-    queue.pushBar(ShooterCore::WorldPos { 20.0f, 4.0f }, 55.0f, 7.0f, energyPct, enColor);
+
+    drawSegmentedBar(queue, 20.0f, 5.0f, 24U, enLit, enLitColor, unlitCathode);
 
     std::array<char, 8> enBuf { };
-    (void)formatDecimal(enBuf.data(), enBuf.size(), energy.value(), 3U);
-    drawText(queue, std::string_view { enBuf.data() }, 78.0f, 4.0f, 1U, txtWhite);
+    (void)formatDecimal(enBuf.data(), enBuf.size(), enVal, 3U);
+    drawText(queue, std::string_view { enBuf.data() }, 95.0f, 5.0f, 1U, txtWhite);
 
-    // 3. Shield meter
-    drawText(queue, "SH", 104.0f, 4.0f, 1U, txtCyan);
-    const float shieldPct { static_cast<float>(shield.percentage()) / 100.0f };
-    queue.pushBar(ShooterCore::WorldPos { 120.0f, 4.0f }, 35.0f, 7.0f, shieldPct,
-        ShooterCore::ColorRgba { 0U, 180U, 255U, 240U });
+    // 4. Shield Instrument: 16-Segment LED Ladder Meter
+    drawText(queue, "SH", 118.0f, 5.0f, 1U, txtCyan);
 
-    std::array<char, 8> shBuf { };
-    (void)formatDecimal(shBuf.data(), shBuf.size(), shield.percentage(), 3U);
-    drawText(queue, std::string_view { shBuf.data() }, 158.0f, 4.0f, 1U, txtWhite);
+    const std::uint8_t shVal { shield.percentage() };
+    const auto shLit { static_cast<std::uint8_t>(
+        std::min((static_cast<std::uint32_t>(shVal) * 16U + 50U) / 100U, 16U)) };
+    const ShooterCore::ColorRgba shLitColor { 30U, 200U, 255U, 255U };
 
-    // 4. Scores
-    drawText(queue, "HI", 184.0f, 4.0f, 1U, txtGold);
+    drawSegmentedBar(queue, 132.0f, 5.0f, 16U, shLit, shLitColor, unlitCathode);
+
+    // 5. Scores (High Score & Current Score)
+    drawText(queue, "HI", 184.0f, 5.0f, 1U, txtGold);
     std::array<char, 12> hiBuf { };
     (void)formatDecimal(hiBuf.data(), hiBuf.size(), hiScore, 6U);
-    drawText(queue, std::string_view { hiBuf.data() }, 200.0f, 4.0f, 1U, txtWhite);
+    drawText(queue, std::string_view { hiBuf.data() }, 200.0f, 5.0f, 1U, txtWhite);
 
-    drawText(queue, "SC", 246.0f, 4.0f, 1U, txtCyan);
+    drawText(queue, "SC", 246.0f, 5.0f, 1U, txtCyan);
     std::array<char, 12> scBuf { };
     (void)formatDecimal(scBuf.data(), scBuf.size(), score, 6U);
-    drawText(queue, std::string_view { scBuf.data() }, 262.0f, 4.0f, 1U, txtWhite);
+    drawText(queue, std::string_view { scBuf.data() }, 262.0f, 5.0f, 1U, txtWhite);
 
-    // 5. Bottom HUD bar backdrop
-    queue.pushBar(ShooterCore::WorldPos { 0.0f, 226.0f }, 320.0f, 14.0f, 1.0f, bgHud);
+    // 6. Molded Bottom Deck Console (Y: 222 to 240 px)
+    queue.pushBar(ShooterCore::WorldPos { 0.0f, 222.0f }, 320.0f, 18.0f, 1.0f, bgCockpit);
+    queue.pushBar(ShooterCore::WorldPos { 0.0f, 222.0f }, 320.0f, 1.0f, 1.0f, bezelBorder);
 
-    // 6. Mode Badge
+    // Bottom Corner Rivets
+    queue.pushBar(ShooterCore::WorldPos { 2.0f, 236.0f }, 2.0f, 2.0f, 1.0f, rivetColor);
+    queue.pushBar(ShooterCore::WorldPos { 316.0f, 236.0f }, 2.0f, 2.0f, 1.0f, rivetColor);
+
+    // 7. Mechanical Transformation Mode Badge
     std::string_view modeStr { "[ROBOT]" };
+    ShooterCore::ColorRgba modeColor { 0U, 230U, 180U, 255U };
     if (mode == ShooterCore::TransformMode::Jet) {
         modeStr = "[ JET ]";
+        modeColor = txtCyan;
     } else if (mode == ShooterCore::TransformMode::TransformingToJet
         || mode == ShooterCore::TransformMode::TransformingToRobot) {
         modeStr = "[TRANS]";
+        modeColor = txtGold;
     }
-    drawText(queue, modeStr, 4.0f, 229.0f, 1U, txtCyan);
+    drawText(queue, modeStr, 6.0f, 227.0f, 1U, modeColor);
 
-    // 7. Level name
-    drawText(queue, "LEVEL 1", 60.0f, 229.0f, 1U, txtWhite);
+    // 8. Sector Telemetry Title
+    drawText(queue, sectorName, 56.0f, 227.0f, 1U, txtWhite);
 
-    // 8. Secondary Weapon Bay Indicator
+    // 9. Secondary Munition Bay Indicator
     std::string_view secName { "SEC:---" };
     ShooterCore::ColorRgba secColor { 140U, 140U, 150U, 255U };
     if (secType == ShooterCore::SecondaryWeaponType::HomingMissile) {
@@ -233,20 +278,28 @@ void HudOverlay::renderHud(ShooterCore::RenderCommandQueue& queue, ShooterCore::
         secName = "BMB:";
         secColor = txtAlert;
     }
-    drawText(queue, secName, 124.0f, 229.0f, 1U, secColor);
+    drawText(queue, secName, 150.0f, 227.0f, 1U, secColor);
 
     if (secType != ShooterCore::SecondaryWeaponType::None) {
         std::array<char, 8> secBuf { };
         (void)formatDecimal(secBuf.data(), secBuf.size(), secAmmo, 2U);
-        drawText(queue, std::string_view { secBuf.data() }, 152.0f, 229.0f, 1U, txtWhite);
+        drawText(queue, std::string_view { secBuf.data() }, 176.0f, 227.0f, 1U, txtWhite);
     }
 
-    // 9. Low energy warning blink
-    if (energy.value() <= 20U) {
+    // 10. Annunciator Status Lamps
+    if (enVal <= 20U) {
         const auto phase { static_cast<std::uint32_t>(warningTimer * 4.0f) };
         if ((phase % 2U) == 0U) {
-            drawText(queue, "! LOW !", 210.0f, 229.0f, 1U, txtAlert);
+            drawText(queue, "!LOW!", 200.0f, 227.0f, 1U, txtAlert);
         }
+    }
+
+    if (shield.isActive()) {
+        drawText(queue, "[SHLD]", 236.0f, 227.0f, 1U, txtCyan);
+    }
+
+    if (lockWarning) {
+        drawText(queue, "[LOCK]", 276.0f, 227.0f, 1U, txtGold);
     }
 }
 

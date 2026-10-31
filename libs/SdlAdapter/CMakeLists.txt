@@ -1,8 +1,12 @@
 add_library(SdlAdapter STATIC
     AdsrEnvelope.cpp
     AdsrEnvelope.h
+    CanvasScaler.cpp
+    CanvasScaler.h
     ChiptuneVoice.cpp
     ChiptuneVoice.h
+    CrtPostProcessor.cpp
+    CrtPostProcessor.h
     MusicTracker.cpp
     MusicTracker.h
     SdlAudio.cpp

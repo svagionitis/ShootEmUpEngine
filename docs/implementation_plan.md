@@ -479,13 +479,16 @@ flowchart TD
 
 ### Phase 14: Cockpit HUD Dashboard, CRT Presentation & Polish
 - **Objective**: Elevate the visual presentation into an authentic retro arcade cockpit experience.
+- **Detailed Plan**: See [docs/phase14_plan.md](phase14_plan.md) for full architectural and implementation specifications.
 - **Key Deliverables**:
   - **Cockpit Dashboard Overlay**:
-    - Molded cockpit frame surrounding the playfield.
-    - Dual segmented LED/LCD bars for Energy Points and Shield Gauge.
-    - Numeric LED score counters, secondary missile ammo count, and active transformation mode indicator.
+    - Molded cockpit canopy frame surrounding the active playfield with riveted struts and tinted bezels.
+    - Dual segmented LED/LCD bars for Energy Points (24 segments, 3-tier color ladder) and Shield Gauge (16 segments) with unlit cathode traces.
+    - Numeric 7-segment LED score counters, secondary missile ammo count, and animated active transformation mode indicator.
+    - Pilot warning annunciator lamps (`LOW EN`, `SHIELD`, `LOCK`, `DANGER`).
   - **Retro Display Options**:
-    - Pixel-perfect integer aspect ratio scaling ($320 \times 240$ native canvas upscaled cleanly to physical window dimensions).
-    - Optional scanline and subtle CRT curvature shader effect.
-    - Screen shake on heavy explosions and critical structural collapses.
+    - Pixel-perfect integer aspect ratio scaling (`CanvasScaler`: $320 \times 240$ native canvas upscaled cleanly with uniform $1\times-9\times$ integer multipliers and matte black pillarboxing).
+    - Multi-tier CRT post-processing (`CrtPostProcessor`: hardware scanlines, aperture grille RGB subpixel mask, and radial glass vignette curvature).
+    - Non-linear trauma-based camera shake (`CameraSystem`: quadratic decay model $Trauma^2$, flash bomb and boss detonation shockwaves, anchored cockpit inertial damper).
+    - Polish and quality-of-life additions: Iris-wipe/fade stage transition shrouds, emergency low-energy red vignette warning, and runtime hotkeys (`F1`-`F11`).
 

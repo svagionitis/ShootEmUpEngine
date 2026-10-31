@@ -46,12 +46,40 @@ public:
         return quitRequested_;
     }
 
+    /// @brief Check whether CRT profile toggle (F1) was pressed this frame.
+    [[nodiscard]] constexpr bool isCrtToggle() const noexcept
+    {
+        return f1Pressed_;
+    }
+
+    /// @brief Check whether Aspect Ratio scale toggle (F2) was pressed this frame.
+    [[nodiscard]] constexpr bool isScaleToggle() const noexcept
+    {
+        return f2Pressed_;
+    }
+
+    /// @brief Check whether Screen Shake toggle (F3) was pressed this frame.
+    [[nodiscard]] constexpr bool isShakeToggle() const noexcept
+    {
+        return f3Pressed_;
+    }
+
+    /// @brief Check whether Fullscreen toggle (F11) was pressed this frame.
+    [[nodiscard]] constexpr bool isFullscreenToggle() const noexcept
+    {
+        return f11Pressed_;
+    }
+
     /// @brief Reset all input states to neutral.
     constexpr void reset() noexcept
     {
         currentInput_ = ShooterCore::EngineInput { };
         previousInput_ = ShooterCore::EngineInput { };
         quitRequested_ = false;
+        f1Pressed_ = false;
+        f2Pressed_ = false;
+        f3Pressed_ = false;
+        f11Pressed_ = false;
     }
 
 private:
@@ -61,6 +89,10 @@ private:
     ShooterCore::EngineInput currentInput_ { };
     ShooterCore::EngineInput previousInput_ { };
     bool quitRequested_ { false };
+    bool f1Pressed_ { false };
+    bool f2Pressed_ { false };
+    bool f3Pressed_ { false };
+    bool f11Pressed_ { false };
 };
 
 } // namespace SdlAdapter

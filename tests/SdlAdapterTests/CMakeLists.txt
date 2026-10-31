@@ -1,6 +1,8 @@
 add_executable(SdlAdapterTests
     Main.cpp
     TestAdsrEnvelope.cpp
+    TestCanvasScaler.cpp
+    TestCrtPostProcessor.cpp
     TestMusicTracker.cpp
     TestSdlAudio.cpp
     TestSdlInput.cpp
@@ -44,3 +46,5 @@ register_sdladapter_test(SdlAdapter_Renderer  SdlRenderer  "unit;renderer;sdl"  
 register_sdladapter_test(SdlAdapter_Audio     SdlAudio     "unit;audio;sdl"     10)
 register_sdladapter_test(SdlAdapter_Adsr      SdlAdsr      "unit;audio;adsr"    10)
 register_sdladapter_test(SdlAdapter_Tracker   SdlTracker   "unit;audio;tracker" 10)
+register_sdladapter_test(SdlAdapter_CanvasScaler   CanvasScaler   "unit;scaling;sdl"   10)
+register_sdladapter_test(SdlAdapter_CrtPostProcessor CrtPostProcessor "unit;crt;sdl" 10)

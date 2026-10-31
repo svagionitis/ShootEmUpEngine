@@ -950,4 +950,89 @@ private:
     bool collected_ { false };
 };
 
+/// @class Trauma
+/// @brief Strongly-typed scalar representing camera shake trauma in range [0.0, 1.0].
+class Trauma final {
+public:
+    constexpr Trauma() noexcept = default;
+
+    /// @brief Construct trauma value clamped to [0.0, 1.0].
+    /// @param[in] val Initial trauma level.
+    explicit constexpr Trauma(float val) noexcept
+        : value_ { std::clamp(val, 0.0f, 1.0f) }
+    {
+    }
+
+    /// @brief Retrieve raw trauma scalar.
+    /// @return Current trauma level in [0.0, 1.0].
+    [[nodiscard]] constexpr float value() const noexcept
+    {
+        return value_;
+    }
+
+    /// @brief Calculate quadratic kinetic displacement magnitude (Trauma^2).
+    /// @return Magnitude in [0.0, 1.0].
+    [[nodiscard]] constexpr float magnitude() const noexcept
+    {
+        return value_ * value_;
+    }
+
+    /// @brief Check whether trauma is active and requires screen vibration.
+    /// @return true if trauma exceeds threshold.
+    [[nodiscard]] constexpr bool isActive() const noexcept
+    {
+        return value_ > 0.001f;
+    }
+
+    /// @brief Decay trauma linearly over time.
+    /// @param[in] dtSec Timestep duration in seconds.
+    /// @param[in] rate Linear decay rate per second (default 1.5).
+    constexpr void decay(float dtSec, float rate = 1.5f) noexcept
+    {
+        value_ = std::max(0.0f, value_ - (rate * dtSec));
+    }
+
+    /// @brief Inject additional trauma into accumulator.
+    /// @param[in] delta Trauma increment.
+    constexpr void add(float delta) noexcept
+    {
+        value_ = std::clamp(value_ + delta, 0.0f, 1.0f);
+    }
+
+    /// @brief Reset trauma to zero.
+    constexpr void reset() noexcept
+    {
+        value_ = 0.0f;
+    }
+
+private:
+    float value_ { 0.0f };
+};
+
+/// @struct ShakeOffset
+/// @brief Multi-axis displacement applied to the rendering camera viewport.
+struct ShakeOffset final {
+    float x { 0.0f };
+    float y { 0.0f };
+    float angleDegrees { 0.0f };
+};
+
+/// @enum class CrtFilterMode
+/// @brief Selectable optical presentation modes for retro display emulation.
+enum class CrtFilterMode : std::uint8_t { Disabled = 0U, Subtle = 1U, Arcade = 2U, RetroCrt = 3U };
+
+/// @enum class AspectRatioMode
+/// @brief Scaling strategy utilized by CanvasScaler for physical window presentation.
+enum class AspectRatioMode : std::uint8_t { IntegerOnly = 0U, UniformFit = 1U, Stretch = 2U };
+
+/// @struct DisplayViewport
+/// @brief Destination letterbox/pillarbox rectangle on the physical window surface.
+struct DisplayViewport final {
+    std::int32_t x { 0 };
+    std::int32_t y { 0 };
+    std::int32_t width { 320 };
+    std::int32_t height { 240 };
+    std::uint32_t integerScale { 1U };
+};
+
 } // namespace ShooterCore

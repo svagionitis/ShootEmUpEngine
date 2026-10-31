@@ -139,4 +139,22 @@ bool SdlWindow::isValid() const noexcept
     return window_ != nullptr && renderer_ != nullptr;
 }
 
+void SdlWindow::toggleFullscreen() noexcept
+{
+    if (window_ == nullptr) {
+        return;
+    }
+    const std::uint32_t flags { SDL_GetWindowFlags(window_) };
+    const bool isFull { (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0U };
+    (void)SDL_SetWindowFullscreen(window_, isFull ? 0U : SDL_WINDOW_FULLSCREEN_DESKTOP);
+}
+
+bool SdlWindow::isFullscreen() const noexcept
+{
+    if (window_ == nullptr) {
+        return false;
+    }
+    return (SDL_GetWindowFlags(window_) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0U;
+}
+
 } // namespace SdlAdapter
