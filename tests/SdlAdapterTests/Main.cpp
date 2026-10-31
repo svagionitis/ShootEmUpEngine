@@ -58,6 +58,21 @@ TEST(SdlAdapterTests, CrtPostProcessor)
     SdlAdapter::Test::runCrtPostProcessorTests();
 }
 
+TEST(SdlAdapterTests, EgaAssetLoader)
+{
+    SdlAdapter::Test::runEgaAssetLoaderTests();
+}
+
+TEST(SdlAdapterTests, EgaRobotLoader)
+{
+    SdlAdapter::Test::runEgaRobotLoaderTests();
+}
+
+TEST(SdlAdapterTests, SarArchiveReader)
+{
+    SdlAdapter::Test::runSarArchiveReaderTests();
+}
+
 int main(int argc, char* argv[])
 {
     SDL_SetMainReady();
@@ -94,6 +109,12 @@ int main(int argc, char* argv[])
                 suiteName = "CanvasScaler";
             } else if (suiteName == "CrtPostProcessor") {
                 suiteName = "CrtPostProcessor";
+            } else if (suiteName == "EgaAssetLoader") {
+                suiteName = "EgaAssetLoader";
+            } else if (suiteName == "EgaRobotLoader") {
+                suiteName = "EgaRobotLoader";
+            } else if (suiteName == "SarArchiveReader") {
+                suiteName = "SarArchiveReader";
             }
             const std::string suiteFilter { std::string("SdlAdapterTests.") + suiteName };
             ::testing::GTEST_FLAG(filter) = suiteFilter;

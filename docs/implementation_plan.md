@@ -492,3 +492,122 @@ flowchart TD
     - Non-linear trauma-based camera shake (`CameraSystem`: quadratic decay model $Trauma^2$, flash bomb and boss detonation shockwaves, anchored cockpit inertial damper).
     - Polish and quality-of-life additions: Iris-wipe/fade stage transition shrouds, emergency low-energy red vignette warning, and runtime hotkeys (`F1`-`F11`).
 
+---
+
+## 5. DOS Classics Reverse-Engineering & Authentic Alignment Phases
+
+Based on the reverse engineering of the original DOS releases ([thexder_firehawk_dos_investigation.md](thexder_firehawk_dos_investigation.md)), the following future phases replace the synthetic approximations with authentic Game Arts / Sierra game assets, level designs, HUD layouts, and mechanics.
+
+### ASCII Pipeline: Authentic DOS Alignment Roadmap
+```
++-------------------------------------------------------------------------------+
+|                       AUTHENTIC DOS ALIGNMENT ROADMAP                         |
+|                                                                               |
+|   [Phase 15: Binary Asset Ingestion Pipeline]                                 |
+|         • EGA 4-Plane Bitplane Parser (EGABIT01.BIN 64 tiles, 2048 B/plane)   |
+|         • Sprite Atlas Loader (EGAROBOT.BIN 88 frames @ 48x32 px)             |
+|         • Firehawk SAR/IX Archive Unpacker (RES1/2/3.SAR 18-byte catalog)     |
+|         │                                                                     |
+|         ▼                                                                     |
+|   [Phase 16: Authentic Thexder 1 Level & Combat Alignment]                    |
+|         • MAP01.BIN & EGAPTR01.BIN Column Decoder (5,803 B Maze)              |
+|         • BUGDB01.BIN Alien Nest Spawn Logic                                  |
+|         • Auto-Locking 360-degree Line-of-Sight Laser                         |
+|         • Unified "Energy is Life" Economy & Realigned Bottom Status Console  |
+|         │                                                                     |
+|         ▼                                                                     |
+|   [Phase 17: Firehawk (Thexder 2) Multi-Stage Campaign & Arsenal]             |
+|         • 5-Weapon Secondary Arsenal (Missile, Homing, Flash, Napalm, Shield) |
+|         • KMxx / CTxx Stage Progression & Boss Arena Battles                  |
+|         • Dual-Resolution Support (MCGA 320x200 + EGA 640x200 HUD)            |
++-------------------------------------------------------------------------------+
+```
+
+### Mermaid Pipeline: Authentic DOS Alignment Roadmap
+```mermaid
+flowchart TD
+    subgraph Phase15["Phase 15: Binary Asset Ingestion Pipeline"]
+        A1["EGA 4-Plane Bitplane Decoder<br/>(EGABIT01.BIN 64 tiles @ 16x16)"]
+        A2["Sprite Atlas Extractor<br/>(EGAROBOT.BIN 88 frames @ 48x32)"]
+        A3["SAR Archive Unpacker<br/>(RESx.SAR / RESx.IX 18-Byte Records)"]
+    end
+
+    subgraph Phase16["Phase 16: Authentic Thexder 1 Level & Combat Engine"]
+        B1["Map Ingestion Engine<br/>(MAP01.BIN via EGAPTR01.BIN Column Ptrs)"]
+        B2["Alien Nest Spawner<br/>(BUGDB01.BIN Entity DB)"]
+        B3["Auto-Aim Tracking Laser<br/>(360° Real-Time Target Lock)"]
+        B4["Bottom Console Status HUD<br/>(Score, Energy 0..100, Shield, Radar)"]
+        B5["Tight 16px Clearance Jet Crawl"]
+    end
+
+    subgraph Phase17["Phase 17: Firehawk Campaign & Weapon Arsenal"]
+        C1["Complete Secondary Arsenal<br/>(Missiles, Homing, Flash, Napalm, Shield)"]
+        C2["Multi-Stage KMxx Labyrinths & Boss Encounters"]
+        C3["Dual-Resolution MCGA 320x200 + EGA 640x200 Display"]
+    end
+
+    Phase15 --> Phase16 --> Phase17
+```
+
+---
+
+### Phase 15: Binary Asset Ingestion Pipeline (EGA & SAR Decoders)
+- **Objective**: Replace all synthetic/procedural drawing in `ProceduralSprites.cpp` and `SpriteAtlas.cpp` with native loaders reading original Game Arts DOS assets.
+- **Detailed Plan**: See [docs/phase15_plan.md](phase15_plan.md) for full architectural and implementation specifications.
+- **Reference**: See detailed format specifications in [thexder_firehawk_dos_investigation.md](thexder_firehawk_dos_investigation.md).
+- **Key Deliverables**:
+  - **4-Plane EGA Tile Decoder (`libs/SdlAdapter/EgaAssetLoader.h/.cpp`)**:
+    - Decodes `EGABIT01.BIN` (8,192 bytes = 64 tiles of 16x16 px across 4 sequential 2,048-byte planes: Blue, Green, Red, Intensity).
+    - Assembles tiles directly into `SdlAdapter::SpriteAtlas` for authentic rock, masonry, barrier, and crystal rendering.
+  - **Authentic Mecha Sprite Loader (`libs/SdlAdapter/EgaRobotLoader.h/.cpp`)**:
+    - Decodes `EGAROBOT.BIN` (16,992 bytes = 88 frames of 48x32 px, 6 bytes per row × 32 rows).
+    - Unpacks authentic walk cycles, 8-way directional aiming, low-profile crouching, and multi-step transformation frames.
+  - **Firehawk Resource Archive Unpacker (`libs/SdlAdapter/SarArchiveReader.h/.cpp`)**:
+    - Reads `RES1.IX`, `RES2.IX`, `RES3.IX` (18-byte catalog entries) to unpack compressed assets from `RESx.SAR`.
+    - Extracts 256-color MCGA sprites (`CGxx`), stage tiles (`CTxx`), and effect animations (`EFCx`).
+
+---
+
+### Phase 16: Authentic Thexder 1 Level Ingestion, Auto-Aiming Laser & Bottom HUD Realignment
+- **Objective**: Achieve 1:1 gameplay parity with the original 1987 Thexder DOS release.
+- **Reference**: See detailed gameplay and level analysis in [thexder_firehawk_dos_investigation.md](thexder_firehawk_dos_investigation.md).
+- **Key Deliverables**:
+  - **Authentic World 1 Map Ingestion (`apps/ThexderGame/Level1Map.cpp`)**:
+    - Replaces procedural level generation with native binary loader for `MAP01.BIN` (5,803 bytes) indexed via `EGAPTR01.BIN` (1,024 column offsets).
+    - Populates destructible barriers, invisible walls, and energy crystal chambers matching World 1 tile-for-tile.
+  - **Alien Nest & Spawner Subsystem (`libs/ShooterCore/NestManager.cpp`)**:
+    - Parses `BUGDB01.BIN` (3,404 bytes) to place authentic enemy nests, spawn frequencies, and enemy stats (amoebas, bats, crawlers).
+  - **Continuous Auto-Aiming Homing Laser Overhaul (`libs/ShooterCore/WeaponSystem.cpp`)**:
+    - Replaces straight projectile beams with continuous raycast sweeps that lock onto the nearest active alien target within line of sight.
+    - Accurately balances energy consumption per second of sustained firing.
+  - **Unified "Energy is Life" Economy (`libs/ShooterCore/GameEngine.cpp`)**:
+    - Unifies health and energy into a single 0–100 pool (expandable up to 250 through alien crystals).
+    - Shields consume discrete energy chunks; taking enemy damage, firing laser, or touching acid directly depletes energy.
+  - **Realigned Bottom Status Console HUD (`apps/ThexderGame/HudOverlay.cpp`)**:
+    - Deprecates top cockpit canopy frame; establishes authentic bottom console layout:
+      - `SCORE [00000000]` and `HI-SCORE [00000000]`.
+      - Segmented `ENERGY [###/###]` dual gauge and numerical display.
+      - `SHIELD` barrier indicator and remaining duration.
+      - Radar scanner displaying player position in active labyrinth sector.
+  - **1-Tile Clearance Flight & Crouch Physics (`libs/ShooterCore/TransformSystem.cpp`)**:
+    - Enforces strict 16 px (1-tile) height for Jet mode and crouching Robot mode, enabling seamless traversal of tight 16 px maze conduits.
+
+---
+
+### Phase 17: Firehawk (Thexder 2) Multi-Stage Campaign & Expanded Arsenal
+- **Objective**: Implement the advanced mechanics, multi-stage narrative, and complete secondary arsenal of Firehawk.
+- **Reference**: See Firehawk archive analysis in [thexder_firehawk_dos_investigation.md](thexder_firehawk_dos_investigation.md).
+- **Key Deliverables**:
+  - **Complete 5-Weapon Secondary Arsenal (`libs/ShooterCore/SecondaryArsenal.cpp`)**:
+    - 1. **Standard Missiles**: High-velocity linear unguided rockets for barrier demolition.
+    - 2. **Homing Missiles**: Heat-seeking warheads tracking high-priority aerial aliens.
+    - 3. **Napalm Bombs**: Dropped surface munitions that carpet platforms with rolling fire.
+    - 4. **Flash Bombs**: Screen-clearing energy detonations neutralizing all active projectiles and weak swarms.
+    - 5. **Deflector Shield**: Omnidirectional invulnerability barrier reflecting incoming laser fire.
+  - **Stage Progression & Boss Arenas (`libs/ShooterCore/LabyrinthMap.cpp`)**:
+    - Progressive loading of Stage 1 (Earth Orbit), Stage 2 (Surface), Stage 3 (Caverns), through Stage 9 (Mothership Core) from `RESx.SAR`.
+    - Multi-stage boss encounters featuring animated destructible hitboxes and vulnerable weak-point cores.
+  - **Dual-Resolution Presentation**:
+    - Combines 320x200 MCGA 256-color gameplay viewport with crisp EGA 640x200 cockpit instrumentation.
+
+
