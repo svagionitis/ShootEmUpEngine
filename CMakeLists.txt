@@ -37,10 +37,14 @@ add_subdirectory(libs/ShooterCore)
 # Tier 2: Platform Presentation Adapter (SDL2)
 add_subdirectory(libs/SdlAdapter)
 
+# Tier 3: Standalone Game Executable
+add_subdirectory(apps/ThexderGame)
+
 # Test Suite
 if(BUILD_TESTING)
     enable_testing()
     add_subdirectory(tests/ShooterCoreTests)
     add_subdirectory(tests/SdlAdapterTests)
+    add_subdirectory(tests/ThexderGameTests)
 endif()
 

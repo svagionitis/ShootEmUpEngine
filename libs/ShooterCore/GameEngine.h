@@ -70,6 +70,16 @@ public:
         return energy_;
     }
 
+    /// @brief Set player energy pool level.
+    /// @param[in] pts Desired energy points.
+    void setPlayerEnergy(EnergyPoints pts) noexcept
+    {
+        energy_ = pts;
+        if (energy_.isDepleted()) {
+            isAlive_ = false;
+        }
+    }
+
     [[nodiscard]] FacingDirection getPlayerFacing() const noexcept
     {
         return playerFacing_;

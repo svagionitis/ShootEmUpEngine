@@ -47,8 +47,8 @@ vcpkg-dependencies/
 *.exe
 *.out
 *.app
+!apps/ThexderGame/
 ThexderApp
-ThexderGame
 TestShooterCore
 TestTransformSystem
 TestWeaponSystem
