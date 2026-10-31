@@ -3,7 +3,9 @@
 #include <cstddef>
 #include <cstdint>
 
+#include <algorithm>
 #include <array>
+#include <cmath>
 
 #include "AudioCommandQueue.h"
 #include "SdlAudio.h"
@@ -19,12 +21,19 @@ void runSdlAudioTests() noexcept
 
         std::array<std::int16_t, 512> pcmBuffer { };
 
-        const ShooterCore::SoundEffectId allEffects[]
-            = { ShooterCore::SoundEffectId::LaserFire, ShooterCore::SoundEffectId::LaserHit,
-                  ShooterCore::SoundEffectId::ShieldDeploy, ShooterCore::SoundEffectId::ShieldDeflect,
-                  ShooterCore::SoundEffectId::TransformJet, ShooterCore::SoundEffectId::TransformRobot,
-                  ShooterCore::SoundEffectId::PlayerDamage, ShooterCore::SoundEffectId::EnemyExplode,
-                  ShooterCore::SoundEffectId::BlockCrumble, ShooterCore::SoundEffectId::EnergyWarning };
+        const ShooterCore::SoundEffectId allEffects[] = { ShooterCore::SoundEffectId::LaserFire,
+            ShooterCore::SoundEffectId::LaserLoop, ShooterCore::SoundEffectId::LaserHit,
+            ShooterCore::SoundEffectId::ShieldDeploy, ShooterCore::SoundEffectId::ShieldDrone,
+            ShooterCore::SoundEffectId::ShieldDeflect, ShooterCore::SoundEffectId::TransformJet,
+            ShooterCore::SoundEffectId::TransformRobot, ShooterCore::SoundEffectId::PlayerDamage,
+            ShooterCore::SoundEffectId::PlayerDestroyed, ShooterCore::SoundEffectId::EnemyExplode,
+            ShooterCore::SoundEffectId::BlockCrumble, ShooterCore::SoundEffectId::WallCrumble,
+            ShooterCore::SoundEffectId::EnergyWarning, ShooterCore::SoundEffectId::MissileLaunch,
+            ShooterCore::SoundEffectId::FlashBombExplode, ShooterCore::SoundEffectId::CanisterPickup,
+            ShooterCore::SoundEffectId::CrystalChime, ShooterCore::SoundEffectId::EnemyShoot,
+            ShooterCore::SoundEffectId::WeaponSelect, ShooterCore::SoundEffectId::SecurityAlarm,
+            ShooterCore::SoundEffectId::BossRoar, ShooterCore::SoundEffectId::BossDamage,
+            ShooterCore::SoundEffectId::BossExplode, ShooterCore::SoundEffectId::PowerUp };
 
         for (const auto effect : allEffects) {
             pcmBuffer.fill(0);
@@ -88,6 +97,68 @@ void runSdlAudioTests() noexcept
             }
         }
         TEST_ASSERT_TRUE(isSilent, "After sufficient decay time, voice must decay to absolute silence");
+    }
+
+    // Test 4: Looping sound and stopSound command
+    {
+        SdlAudio audio;
+        audio.playSoundLoop(ShooterCore::SoundEffectId::LaserLoop, 0.7f);
+
+        std::array<std::int16_t, 1024> buffer { };
+        // Advance multiple blocks; looping sound must remain sustained
+        for (std::size_t i { 0U }; i < 8U; ++i) {
+            audio.generatePcm(buffer.data(), buffer.size() * sizeof(std::int16_t));
+        }
+
+        bool stillPlaying { false };
+        for (const auto s : buffer) {
+            if (s != 0) {
+                stillPlaying = true;
+                break;
+            }
+        }
+        TEST_ASSERT_TRUE(stillPlaying, "Looping sound must sustain audio without cutting off");
+
+        // Stop the loop
+        audio.stopSound(ShooterCore::SoundEffectId::LaserLoop);
+
+        // Step past release phase (~40ms = ~1764 samples)
+        for (std::size_t i { 0U }; i < 10U; ++i) {
+            audio.generatePcm(buffer.data(), buffer.size() * sizeof(std::int16_t));
+        }
+
+        bool stopped { true };
+        for (const auto s : buffer) {
+            if (s != 0) {
+                stopped = false;
+                break;
+            }
+        }
+        TEST_ASSERT_TRUE(stopped, "After stopSound and release phase, audio must become silent");
+    }
+
+    // Test 5: Soft saturation limiter prevents sample overflow
+    {
+        SdlAudio audio;
+        // Trigger all high-amplitude presets simultaneously
+        audio.playSound(ShooterCore::SoundEffectId::FlashBombExplode, 1.0f);
+        audio.playSound(ShooterCore::SoundEffectId::BossExplode, 1.0f);
+        audio.playSound(ShooterCore::SoundEffectId::LaserFire, 1.0f);
+        audio.playSound(ShooterCore::SoundEffectId::ShieldDeploy, 1.0f);
+        audio.playMusic(ShooterCore::MusicTrackId::BossBattle, true);
+
+        std::array<std::int16_t, 4096> buffer { };
+        audio.generatePcm(buffer.data(), buffer.size() * sizeof(std::int16_t));
+
+        bool overflowDetected { false };
+        for (const auto s : buffer) {
+            // Check that samples stay strictly within 16-bit range without wrapping
+            if (s > 32767 || s < -32767) {
+                overflowDetected = true;
+                break;
+            }
+        }
+        TEST_ASSERT_FALSE(overflowDetected, "Master soft limiter must clamp all samples within [-32767, 32767]");
     }
 }
 

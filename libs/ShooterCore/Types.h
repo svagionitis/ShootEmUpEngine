@@ -488,11 +488,27 @@ enum class SoundEffectId : std::uint8_t {
     SecurityAlarm = 17U,
     BossRoar = 18U,
     BossExplode = 19U,
-    PowerUp = 20U
+    PowerUp = 20U,
+    LaserLoop = 21U,
+    LaserStop = 22U,
+    ShieldDrone = 23U,
+    CrystalChime = 24U,
+    PlayerDestroyed = 25U,
+    BossDamage = 26U
 };
 
 /// @brief Music track identifier for presentation audio stream.
-enum class MusicTrackId : std::uint8_t { None = 0U, MainTheme = 1U, Level1Cavern = 2U, BossBattle = 3U, GameOver = 4U };
+enum class MusicTrackId : std::uint8_t {
+    None = 0U,
+    MainTheme = 1U,
+    MoonlightSonata = 1U,
+    Level1Cavern = 2U,
+    FireHawkAction = 2U,
+    BossBattle = 3U,
+    BossDreadnought = 3U,
+    GameOver = 4U,
+    StageClear = 5U
+};
 
 /// @brief Entity classification category.
 enum class EntityType : std::uint8_t {

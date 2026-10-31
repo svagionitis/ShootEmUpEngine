@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
         if (!audio.init()) {
             LOG(WARNING) << "Audio device could not be opened; continuing without sound.";
         } else {
-            audio.playMusic(ShooterCore::MusicTrackId::Level1Cavern);
+            audio.playMusic(ShooterCore::MusicTrackId::MoonlightSonata);
         }
     }
 

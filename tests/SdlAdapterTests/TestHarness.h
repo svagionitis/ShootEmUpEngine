@@ -74,5 +74,7 @@ void runSdlInputTests() noexcept;
 void runTimePacerTests() noexcept;
 void runSdlRendererTests() noexcept;
 void runSdlAudioTests() noexcept;
+void runAdsrEnvelopeTests() noexcept;
+void runMusicTrackerTests() noexcept;
 
 } // namespace SdlAdapter::Test

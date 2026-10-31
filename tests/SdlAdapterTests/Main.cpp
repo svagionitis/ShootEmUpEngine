@@ -38,6 +38,16 @@ TEST(SdlAdapterTests, Audio)
     SdlAdapter::Test::runSdlAudioTests();
 }
 
+TEST(SdlAdapterTests, AdsrEnvelope)
+{
+    SdlAdapter::Test::runAdsrEnvelopeTests();
+}
+
+TEST(SdlAdapterTests, MusicTracker)
+{
+    SdlAdapter::Test::runMusicTrackerTests();
+}
+
 int main(int argc, char* argv[])
 {
     SDL_SetMainReady();
@@ -66,6 +76,10 @@ int main(int argc, char* argv[])
                 suiteName = "Renderer";
             } else if (suiteName == "SdlAudio") {
                 suiteName = "Audio";
+            } else if (suiteName == "SdlAdsr") {
+                suiteName = "AdsrEnvelope";
+            } else if (suiteName == "SdlTracker") {
+                suiteName = "MusicTracker";
             }
             const std::string suiteFilter { std::string("SdlAdapterTests.") + suiteName };
             ::testing::GTEST_FLAG(filter) = suiteFilter;

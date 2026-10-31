@@ -464,6 +464,7 @@ flowchart TD
 
 ### Phase 13: Multi-Channel Retro Synthesizer & Authentic Music Soundtrack
 - **Objective**: Deliver authentic 1980s chiptune and FM synthesizer audio utilizing SDL2's streaming audio callback.
+- **Detailed Plan**: See [docs/phase13_plan.md](phase13_plan.md) for full architectural and implementation specifications.
 - **Key Deliverables**:
   - **Multi-Channel Software Synthesizer (`libs/SdlAdapter/SdlAudio.h`)**:
     - Channels: 2 Square waves (lead & harmony), 1 Triangle wave (bass line), 1 White Noise generator (percussion & explosions).

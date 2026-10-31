@@ -34,6 +34,40 @@ bool AudioCommandQueue::pushSound(SoundEffectId id, float volume) noexcept
     return true;
 }
 
+bool AudioCommandQueue::pushSoundLoop(SoundEffectId id, float volume) noexcept
+{
+    if (count_ >= kCapacity) {
+        return false;
+    }
+
+    AudioCommand& cmd { commands_[count_] };
+    cmd.type = AudioCommandType::PlaySound;
+    cmd.soundId = id;
+    cmd.musicId = MusicTrackId::None;
+    cmd.volume = std::clamp(volume, 0.0f, 1.0f);
+    cmd.loop = true;
+
+    ++count_;
+    return true;
+}
+
+bool AudioCommandQueue::stopSound(SoundEffectId id) noexcept
+{
+    if (count_ >= kCapacity) {
+        return false;
+    }
+
+    AudioCommand& cmd { commands_[count_] };
+    cmd.type = AudioCommandType::StopSound;
+    cmd.soundId = id;
+    cmd.musicId = MusicTrackId::None;
+    cmd.volume = 0.0f;
+    cmd.loop = false;
+
+    ++count_;
+    return true;
+}
+
 bool AudioCommandQueue::pushMusic(MusicTrackId id, bool loop) noexcept
 {
     if (count_ >= kCapacity) {

@@ -74,6 +74,17 @@ public:
     /// @return true if successfully pushed; false if queue is full.
     bool pushSound(SoundEffectId id, float volume = 1.0f) noexcept;
 
+    /// @brief Push continuous looping sound effect playback command.
+    /// @param[in] id Sound effect identifier.
+    /// @param[in] volume Playback amplitude in range [0.0, 1.0].
+    /// @return true if successfully pushed; false if queue is full.
+    bool pushSoundLoop(SoundEffectId id, float volume = 1.0f) noexcept;
+
+    /// @brief Push stop sound effect command.
+    /// @param[in] id Sound effect identifier to halt.
+    /// @return true if successfully pushed; false if queue is full.
+    bool stopSound(SoundEffectId id) noexcept;
+
     /// @brief Push music track playback command.
     /// @param[in] id Music track identifier.
     /// @param[in] loop Whether track loops indefinitely.

@@ -1,4 +1,10 @@
 add_library(SdlAdapter STATIC
+    AdsrEnvelope.cpp
+    AdsrEnvelope.h
+    ChiptuneVoice.cpp
+    ChiptuneVoice.h
+    MusicTracker.cpp
+    MusicTracker.h
     SdlAudio.cpp
     SdlAudio.h
     SdlInput.cpp
@@ -7,10 +13,14 @@ add_library(SdlAdapter STATIC
     SdlRenderer.h
     SdlWindow.cpp
     SdlWindow.h
+    SoundPresets.h
     SpriteAtlas.cpp
     SpriteAtlas.h
     TimePacer.cpp
     TimePacer.h
+    TrackBossBattle.h
+    TrackFireHawk.h
+    TrackMoonlightSonata.h
 )
 
 target_include_directories(SdlAdapter PUBLIC

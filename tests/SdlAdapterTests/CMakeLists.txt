@@ -1,5 +1,7 @@
 add_executable(SdlAdapterTests
     Main.cpp
+    TestAdsrEnvelope.cpp
+    TestMusicTracker.cpp
     TestSdlAudio.cpp
     TestSdlInput.cpp
     TestSdlRenderer.cpp
@@ -40,3 +42,5 @@ register_sdladapter_test(SdlAdapter_Input     SdlInput     "unit;input;sdl"     
 register_sdladapter_test(SdlAdapter_TimePacer TimePacer    "unit;timing;sdl"    10)
 register_sdladapter_test(SdlAdapter_Renderer  SdlRenderer  "unit;renderer;sdl"  20)
 register_sdladapter_test(SdlAdapter_Audio     SdlAudio     "unit;audio;sdl"     10)
+register_sdladapter_test(SdlAdapter_Adsr      SdlAdsr      "unit;audio;adsr"    10)
+register_sdladapter_test(SdlAdapter_Tracker   SdlTracker   "unit;audio;tracker" 10)

@@ -96,6 +96,19 @@ void runCommandQueueTests() noexcept
         const AudioCommand& acmd2 { aqueue.get(2U) };
         TEST_ASSERT(acmd2.type == AudioCommandType::StopMusic, "Type must be StopMusic");
 
+        const bool pushedLoop { aqueue.pushSoundLoop(SoundEffectId::LaserLoop, 0.9f) };
+        TEST_ASSERT(pushedLoop, "pushSoundLoop must succeed");
+        const AudioCommand& acmd3 { aqueue.get(3U) };
+        TEST_ASSERT(acmd3.type == AudioCommandType::PlaySound, "Type must be PlaySound");
+        TEST_ASSERT(acmd3.soundId == SoundEffectId::LaserLoop, "soundId must be LaserLoop");
+        TEST_ASSERT(acmd3.loop == true, "loop must be true for pushSoundLoop");
+
+        const bool pushedStopSfx { aqueue.stopSound(SoundEffectId::LaserLoop) };
+        TEST_ASSERT(pushedStopSfx, "stopSound must succeed");
+        const AudioCommand& acmd4 { aqueue.get(4U) };
+        TEST_ASSERT(acmd4.type == AudioCommandType::StopSound, "Type must be StopSound");
+        TEST_ASSERT(acmd4.soundId == SoundEffectId::LaserLoop, "soundId must be LaserLoop");
+
         aqueue.clear();
         TEST_ASSERT(aqueue.isEmpty(), "clear() must empty AudioCommandQueue");
     }
