@@ -119,5 +119,7 @@ void runSecretManagerTests() noexcept;
 void runCameraSystemTests() noexcept;
 void runMinimapRadarTests() noexcept;
 void runBossControllerTests() noexcept;
+void runBossArenaTests() noexcept;
+void runStageProgressionTests() noexcept;
 
 } // namespace ShooterCore::Test

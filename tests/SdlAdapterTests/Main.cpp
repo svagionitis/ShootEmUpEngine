@@ -58,6 +58,16 @@ TEST(SdlAdapterTests, CrtPostProcessor)
     SdlAdapter::Test::runCrtPostProcessorTests();
 }
 
+TEST(SdlAdapterTests, CutscenePlayer)
+{
+    SdlAdapter::Test::runCutscenePlayerTests();
+}
+
+TEST(SdlAdapterTests, DualResolutionRenderer)
+{
+    SdlAdapter::Test::runDualResolutionRendererTests();
+}
+
 TEST(SdlAdapterTests, EgaAssetLoader)
 {
     SdlAdapter::Test::runEgaAssetLoaderTests();
@@ -81,6 +91,16 @@ TEST(SdlAdapterTests, EgaRobotLoader)
 TEST(SdlAdapterTests, SarArchiveReader)
 {
     SdlAdapter::Test::runSarArchiveReaderTests();
+}
+
+TEST(SdlAdapterTests, SarDecompressor)
+{
+    SdlAdapter::Test::runSarDecompressorTests();
+}
+
+TEST(SdlAdapterTests, SarStageLoader)
+{
+    SdlAdapter::Test::runSarStageLoaderTests();
 }
 
 int main(int argc, char* argv[])

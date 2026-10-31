@@ -2,8 +2,12 @@ add_library(ShooterCore STATIC
     AnimationController.cpp
     AnimationController.h
     AudioCommandQueue.cpp
+    BossArenaSystem.cpp
+    BossArenaSystem.h
     BossController.cpp
     BossController.h
+    BossEntity.cpp
+    BossEntity.h
     CameraSystem.cpp
     CameraSystem.h
     CollisionSolver.cpp
@@ -29,6 +33,8 @@ add_library(ShooterCore STATIC
     SecretManager.h
     SecuritySystem.cpp
     SecuritySystem.h
+    StageProgressionSystem.cpp
+    StageProgressionSystem.h
     SupplyDropSystem.cpp
     SupplyDropSystem.h
     TileMap.cpp

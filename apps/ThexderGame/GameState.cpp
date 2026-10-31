@@ -295,9 +295,7 @@ void GameState::buildRenderQueue(ShooterCore::RenderCommandQueue& outQueue) noex
     const ShooterCore::ShieldGauge shieldGauge { static_cast<std::uint8_t>(
         engine_.getWeaponSystem().isShieldActive() ? 100U : 0U) };
     const auto& arsenal { engine_.getSecondaryArsenal() };
-    const std::uint8_t secAmmo { (arsenal.activeWeapon() == ShooterCore::SecondaryWeaponType::HomingMissile)
-            ? arsenal.missileAmmo().count()
-            : arsenal.bombAmmo().count() };
+    const std::uint8_t secAmmo { arsenal.currentAmmo().count() };
 
     hud_.renderHud(outQueue, engine_.getPlayerEnergy(), shieldGauge, score_, hiScore_, engine_.getPlayerMode(),
         warningTimer_, arsenal.activeWeapon(), secAmmo);

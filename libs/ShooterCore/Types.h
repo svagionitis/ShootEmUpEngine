@@ -494,7 +494,11 @@ enum class SoundEffectId : std::uint8_t {
     ShieldDrone = 23U,
     CrystalChime = 24U,
     PlayerDestroyed = 25U,
-    BossDamage = 26U
+    BossDamage = 26U,
+    NapalmDrop = 27U,
+    NapalmBurn = 28U,
+    DeflectorActive = 29U,
+    DeflectorReflect = 30U
 };
 
 /// @brief Music track identifier for presentation audio stream.
@@ -652,7 +656,14 @@ struct ShieldFxState final {
 
 /// @enum class SecondaryWeaponType
 /// @brief Classification of auxiliary ordnance bays.
-enum class SecondaryWeaponType : std::uint8_t { None = 0U, HomingMissile = 1U, FlashBomb = 2U };
+enum class SecondaryWeaponType : std::uint8_t {
+    None = 0U,
+    StandardMissile = 1U,
+    HomingMissile = 2U,
+    NapalmBomb = 3U,
+    FlashBomb = 4U,
+    DeflectorShield = 5U
+};
 
 /// @class SecondaryAmmo
 /// @brief Strongly-typed ammunition magazine counter with underflow and capacity guards.
@@ -717,7 +728,14 @@ private:
 
 /// @enum class CanisterType
 /// @brief Classification of tactical supply cargo canisters.
-enum class CanisterType : std::uint8_t { MissilePack = 0U, FlashBomb = 1U, EnergyBoost = 2U, ShieldRecharge = 3U };
+enum class CanisterType : std::uint8_t {
+    MissilePack = 0U,
+    FlashBomb = 1U,
+    EnergyBoost = 2U,
+    ShieldRecharge = 3U,
+    NapalmPack = 4U,
+    DeflectorPack = 5U
+};
 
 /// @enum class EnemyAiType
 /// @brief Classification of enemy AI behavioral controllers.
@@ -741,8 +759,21 @@ enum class AiBehaviorState : std::uint8_t {
 };
 
 inline constexpr std::size_t kMaxActiveMissiles { 8U };
+inline constexpr std::size_t kMaxStandardMissiles { 8U };
+inline constexpr std::size_t kMaxNapalmCanisters { 4U };
+inline constexpr std::size_t kMaxNapalmPools { 4U };
 inline constexpr std::size_t kMaxCanisters { 16U };
 inline constexpr std::size_t kMaxNests { 16U };
+
+/// @struct StandardMissile
+/// @brief State data for an unguided high-velocity linear demolition rocket.
+struct StandardMissile final {
+    WorldPos pos { 0.0f, 0.0f };
+    Velocity vel { 0.0f, 0.0f };
+    float smokeTimer { 0.0f };
+    float lifeTimer { 2.0f };
+    bool active { false };
+};
 
 /// @struct HomingMissile
 /// @brief State data for an airborne self-guided micro-missile.
@@ -753,6 +784,34 @@ struct HomingMissile final {
     float fuelSec { 2.5f };
     float smokeTimer { 0.0f };
     float angleDeg { 0.0f };
+    bool active { false };
+};
+
+/// @struct NapalmCanister
+/// @brief State data for a dropped falling incendiary munition before ground impact.
+struct NapalmCanister final {
+    WorldPos pos { 0.0f, 0.0f };
+    Velocity vel { 0.0f, 0.0f };
+    bool active { false };
+};
+
+/// @struct NapalmPool
+/// @brief Pre-allocated active ground fire area.
+struct NapalmPool final {
+    WorldPos leftEdge { 0.0f, 0.0f };
+    WorldPos rightEdge { 0.0f, 0.0f };
+    float floorY { 0.0f };
+    float remainingSec { 0.0f };
+    float tickTimer { 0.0f };
+    bool active { false };
+};
+
+/// @struct DeflectorState
+/// @brief Mecha reflective barrier state.
+struct DeflectorState final {
+    WorldPos center { 0.0f, 0.0f };
+    float remainingSec { 0.0f };
+    std::uint16_t hitpoints { 0U };
     bool active { false };
 };
 

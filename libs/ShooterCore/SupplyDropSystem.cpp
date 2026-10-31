@@ -123,6 +123,12 @@ void SupplyDropSystem::update(DeltaTime dt, Hitbox playerBox, const TileMap& map
             case CanisterType::ShieldRecharge:
                 playerShield = ShieldGauge { 100U };
                 break;
+            case CanisterType::NapalmPack:
+                arsenal.replenishNapalm(3U);
+                break;
+            case CanisterType::DeflectorPack:
+                arsenal.replenishDeflector(2U);
+                break;
             }
 
             audio.pushSound(SoundEffectId::CanisterPickup);

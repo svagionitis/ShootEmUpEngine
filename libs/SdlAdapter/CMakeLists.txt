@@ -7,6 +7,10 @@ add_library(SdlAdapter STATIC
     ChiptuneVoice.h
     CrtPostProcessor.cpp
     CrtPostProcessor.h
+    CutscenePlayer.cpp
+    CutscenePlayer.h
+    DualResolutionRenderer.cpp
+    DualResolutionRenderer.h
     EgaAssetLoader.cpp
     EgaAssetLoader.h
     EgaBugLoader.cpp
@@ -19,6 +23,10 @@ add_library(SdlAdapter STATIC
     MusicTracker.h
     SarArchiveReader.cpp
     SarArchiveReader.h
+    SarDecompressor.cpp
+    SarDecompressor.h
+    SarStageLoader.cpp
+    SarStageLoader.h
     SdlAudio.cpp
     SdlAudio.h
     SdlInput.cpp

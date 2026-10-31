@@ -254,10 +254,16 @@ void HudOverlay::renderHud(ShooterCore::RenderCommandQueue& queue, ShooterCore::
 
     // Secondary weapon readout if equipped
     if (secType != ShooterCore::SecondaryWeaponType::None) {
-        if (secType == ShooterCore::SecondaryWeaponType::HomingMissile) {
+        if (secType == ShooterCore::SecondaryWeaponType::StandardMissile) {
+            drawText(queue, "RKT", 204.0f, kConsoleStartY + 17.0f, 1U, txtCyan);
+        } else if (secType == ShooterCore::SecondaryWeaponType::HomingMissile) {
             drawText(queue, "MSL", 204.0f, kConsoleStartY + 17.0f, 1U, txtCyan);
-        } else {
+        } else if (secType == ShooterCore::SecondaryWeaponType::NapalmBomb) {
+            drawText(queue, "NPM", 204.0f, kConsoleStartY + 17.0f, 1U, txtAlert);
+        } else if (secType == ShooterCore::SecondaryWeaponType::FlashBomb) {
             drawText(queue, "BMB", 204.0f, kConsoleStartY + 17.0f, 1U, txtYellow);
+        } else if (secType == ShooterCore::SecondaryWeaponType::DeflectorShield) {
+            drawText(queue, "DEF", 204.0f, kConsoleStartY + 17.0f, 1U, txtGreen);
         }
         std::array<char, 8> ammoBuf { };
         (void)formatDecimal(ammoBuf.data(), ammoBuf.size(), secAmmo, 2U);

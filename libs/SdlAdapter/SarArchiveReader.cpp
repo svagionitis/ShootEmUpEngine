@@ -10,6 +10,8 @@
 #include <utility>
 #include <vector>
 
+#include "SarDecompressor.h"
+
 namespace SdlAdapter {
 
 namespace {
@@ -186,6 +188,60 @@ bool SarArchiveReader::readEntryRaw(
     sarFile.read(reinterpret_cast<char*>(outBuf), static_cast<std::streamsize>(toRead));
     bytesRead = static_cast<std::size_t>(sarFile.gcount());
     return bytesRead > 0U;
+}
+
+bool SarArchiveReader::decompressEntry(std::string_view token, std::vector<std::uint8_t>& outData) const
+{
+    const SarEntry* entry { findEntry(token) };
+    if (entry == nullptr) {
+        return false;
+    }
+
+    if (entry->compressed == entry->uncompressed) {
+        return extractEntry(token, outData);
+    }
+
+    std::vector<std::uint8_t> compressedData;
+    if (!extractEntry(token, compressedData)) {
+        return false;
+    }
+
+    outData.resize(entry->uncompressed);
+    std::size_t written { 0U };
+    if (!SarDecompressor::decompress(
+            compressedData.data(), compressedData.size(), outData.data(), outData.size(), written)) {
+        outData.clear();
+        return false;
+    }
+
+    outData.resize(written);
+    return written == static_cast<std::size_t>(entry->uncompressed);
+}
+
+bool SarArchiveReader::readEntryDecompressed(
+    std::string_view token, std::uint8_t* outBuf, std::size_t bufSize, std::size_t& bytesWritten) const noexcept
+{
+    bytesWritten = 0U;
+    if (outBuf == nullptr || bufSize == 0U) {
+        return false;
+    }
+
+    const SarEntry* entry { findEntry(token) };
+    if (entry == nullptr) {
+        return false;
+    }
+
+    if (entry->compressed == entry->uncompressed) {
+        return readEntryRaw(token, outBuf, bufSize, bytesWritten);
+    }
+
+    // Stack buffer for compressed payload (max compressed size in Firehawk is < 48KB)
+    std::vector<std::uint8_t> compBuf;
+    if (!extractEntry(token, compBuf)) {
+        return false;
+    }
+
+    return SarDecompressor::decompress(compBuf.data(), compBuf.size(), outBuf, bufSize, bytesWritten);
 }
 
 } // namespace SdlAdapter

@@ -78,10 +78,14 @@ void runAdsrEnvelopeTests() noexcept;
 void runMusicTrackerTests() noexcept;
 void runCanvasScalerTests() noexcept;
 void runCrtPostProcessorTests() noexcept;
+void runCutscenePlayerTests() noexcept;
+void runDualResolutionRendererTests() noexcept;
 void runEgaAssetLoaderTests() noexcept;
 void runEgaBugLoaderTests() noexcept;
 void runEgaMapLoaderTests() noexcept;
 void runEgaRobotLoaderTests() noexcept;
 void runSarArchiveReaderTests() noexcept;
+void runSarDecompressorTests() noexcept;
+void runSarStageLoaderTests() noexcept;
 
 } // namespace SdlAdapter::Test

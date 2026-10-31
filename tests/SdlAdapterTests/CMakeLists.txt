@@ -3,12 +3,16 @@ add_executable(SdlAdapterTests
     TestAdsrEnvelope.cpp
     TestCanvasScaler.cpp
     TestCrtPostProcessor.cpp
+    TestCutscenePlayer.cpp
+    TestDualResolutionRenderer.cpp
     TestEgaAssetLoader.cpp
     TestEgaBugLoader.cpp
     TestEgaMapLoader.cpp
     TestEgaRobotLoader.cpp
     TestMusicTracker.cpp
     TestSarArchiveReader.cpp
+    TestSarDecompressor.cpp
+    TestSarStageLoader.cpp
     TestSdlAudio.cpp
     TestSdlInput.cpp
     TestSdlRenderer.cpp
@@ -53,8 +57,12 @@ register_sdladapter_test(SdlAdapter_Adsr      SdlAdsr      "unit;audio;adsr"    
 register_sdladapter_test(SdlAdapter_Tracker   SdlTracker   "unit;audio;tracker" 10)
 register_sdladapter_test(SdlAdapter_CanvasScaler   CanvasScaler   "unit;scaling;sdl"   10)
 register_sdladapter_test(SdlAdapter_CrtPostProcessor CrtPostProcessor "unit;crt;sdl" 10)
+register_sdladapter_test(SdlAdapter_CutscenePlayer   CutscenePlayer   "unit;cutscene;sdl" 10)
+register_sdladapter_test(SdlAdapter_DualResolutionRenderer DualResolutionRenderer "unit;compositor;sdl" 10)
 register_sdladapter_test(SdlAdapter_EgaAssetLoader EgaAssetLoader "unit;asset;ega;sdl" 10)
 register_sdladapter_test(SdlAdapter_EgaBugLoader EgaBugLoader "unit;asset;bug;sdl" 10)
 register_sdladapter_test(SdlAdapter_EgaMapLoader EgaMapLoader "unit;asset;map;sdl" 10)
 register_sdladapter_test(SdlAdapter_EgaRobotLoader EgaRobotLoader "unit;asset;robot;sdl" 10)
 register_sdladapter_test(SdlAdapter_SarArchiveReader SarArchiveReader "unit;asset;sar;sdl" 10)
+register_sdladapter_test(SdlAdapter_SarDecompressor  SarDecompressor  "unit;asset;sar;decompress;sdl" 10)
+register_sdladapter_test(SdlAdapter_SarStageLoader    SarStageLoader    "unit;asset;stage;loader;sdl"    10)

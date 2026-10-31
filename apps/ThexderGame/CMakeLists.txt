@@ -6,6 +6,8 @@ add_executable(ThexderGame
     GameState.cpp
     Level1Map.h
     Level1Map.cpp
+    MissionBriefingSystem.h
+    MissionBriefingSystem.cpp
     HudOverlay.h
     HudOverlay.cpp
     EntitySpawner.h

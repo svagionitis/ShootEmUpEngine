@@ -69,6 +69,21 @@ public:
     [[nodiscard]] bool readEntryRaw(
         std::string_view token, std::uint8_t* outBuf, std::size_t bufSize, std::size_t& bytesRead) const noexcept;
 
+    /// @brief Extracts and decompresses an entry into a vector buffer.
+    /// @param token Asset token.
+    /// @param outData Destination vector receiving uncompressed bytes.
+    /// @return True if decompressed successfully.
+    [[nodiscard]] bool decompressEntry(std::string_view token, std::vector<std::uint8_t>& outData) const;
+
+    /// @brief Reads and decompresses entry into a caller-supplied buffer with zero heap allocation.
+    /// @param token Asset token.
+    /// @param outBuf Pointer to destination buffer.
+    /// @param bufSize Maximum capacity of destination buffer.
+    /// @param bytesWritten Output receiving actual decompressed byte count.
+    /// @return True if decompressed successfully.
+    [[nodiscard]] bool readEntryDecompressed(
+        std::string_view token, std::uint8_t* outBuf, std::size_t bufSize, std::size_t& bytesWritten) const noexcept;
+
 private:
     std::string sarPath_ { };
     std::vector<SarEntry> entries_ { };

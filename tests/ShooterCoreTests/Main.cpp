@@ -130,6 +130,16 @@ TEST(ShooterCoreTests, BossController)
     ShooterCore::Test::runBossControllerTests();
 }
 
+TEST(ShooterCoreTests, BossArena)
+{
+    ShooterCore::Test::runBossArenaTests();
+}
+
+TEST(ShooterCoreTests, StageProgression)
+{
+    ShooterCore::Test::runStageProgressionTests();
+}
+
 int main(int argc, char* argv[])
 {
     google::InitGoogleLogging(argv[0]);

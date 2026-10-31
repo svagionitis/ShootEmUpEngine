@@ -1,6 +1,7 @@
 add_executable(ShooterCoreTests
     Main.cpp
     TestAnimationController.cpp
+    TestBossArenaSystem.cpp
     TestBossController.cpp
     TestCameraSystem.cpp
     TestCollisionSolver.cpp
@@ -19,6 +20,7 @@ add_executable(ShooterCoreTests
     TestSecretManager.cpp
     TestSecuritySystem.cpp
     TestShieldSystem.cpp
+    TestStageProgression.cpp
     TestSupplyDropSystem.cpp
     TestTileMap.cpp
     TestTransformSystem.cpp
@@ -75,3 +77,5 @@ register_shooter_test(ShooterCore_SecretManager    SecretManager    "unit;secret
 register_shooter_test(ShooterCore_CameraSystem     CameraSystem     "unit;camera"        10)
 register_shooter_test(ShooterCore_MinimapRadar     MinimapRadar     "unit;minimap"       10)
 register_shooter_test(ShooterCore_BossController   BossController   "combat;boss"        15)
+register_shooter_test(ShooterCore_BossArena        BossArena        "combat;boss;arena"  10)
+register_shooter_test(ShooterCore_StageProgression  StageProgression "unit;progression;campaign" 10)

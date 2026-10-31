@@ -4,10 +4,13 @@ add_executable(ThexderGameTests
     Main.cpp
     TestLevel1Map.cpp
     TestHudOverlay.cpp
+    TestMissionBriefing.cpp
     TestEntitySpawner.cpp
     TestGameState.cpp
     ${CMAKE_SOURCE_DIR}/apps/ThexderGame/Level1Map.h
     ${CMAKE_SOURCE_DIR}/apps/ThexderGame/Level1Map.cpp
+    ${CMAKE_SOURCE_DIR}/apps/ThexderGame/MissionBriefingSystem.h
+    ${CMAKE_SOURCE_DIR}/apps/ThexderGame/MissionBriefingSystem.cpp
     ${CMAKE_SOURCE_DIR}/apps/ThexderGame/HudOverlay.h
     ${CMAKE_SOURCE_DIR}/apps/ThexderGame/HudOverlay.cpp
     ${CMAKE_SOURCE_DIR}/apps/ThexderGame/EntitySpawner.h

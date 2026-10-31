@@ -597,6 +597,7 @@ flowchart TD
 
 ### Phase 17: Firehawk (Thexder 2) Multi-Stage Campaign & Expanded Arsenal
 - **Objective**: Implement the advanced mechanics, multi-stage narrative, and complete secondary arsenal of Firehawk.
+- **Detailed Plan**: See [docs/phase17_plan.md](phase17_plan.md) for full architectural and implementation specifications.
 - **Reference**: See Firehawk archive analysis in [thexder_firehawk_dos_investigation.md](thexder_firehawk_dos_investigation.md).
 - **Key Deliverables**:
   - **Complete 5-Weapon Secondary Arsenal (`libs/ShooterCore/SecondaryArsenal.cpp`)**:
