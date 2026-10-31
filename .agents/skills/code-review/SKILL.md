@@ -1,28 +1,27 @@
 ---
 name: code-review
 description: >-
-  Use this skill to perform a dual-axis code review on diffs, evaluating safety standards compliance (MISRA/CERT/IWYU) and functional specification integrity across all current and future codebase modules.
+  Use this skill to perform a dual-axis code review on diffs, evaluating safety standards compliance (MISRA/CERT/IWYU/clang-format) and functional specification integrity across all current and future codebase modules.
 ---
 
-# Dual-Axis Code Review
+# Dual-Axis Code Review Workflow
 
-This skill performs a rigorous, multi-perspective code review across the **entire codebase**—enforcing standards on all existing libraries (`libs/ShooterCore`, `libs/SdlAdapter`) as well as **any newly added or future libraries** in this repository.
-
-It separates evaluation into two independent axes: **Standards & Safety** (MISRA/CERT compliance, architectural decoupling, code smells) and **Specification & Correctness** (subsystem requirements, physics/collision rules, mathematical correctness).
+This skill executes a systematic, dual-axis code review on any patch, commit range, pull request, or local working tree across all current and future modules in the repository.
 
 ---
 
-## 1. Review Architecture
+## 1. Dual-Axis Review Model
 
 ```
 +-------------------------------------------------------------------------------+
-|                       DUAL-AXIS CODE REVIEW ARCHITECTURE                      |
+|                         DUAL-AXIS CODE REVIEW MODEL                           |
 |                                                                               |
 |   Diff / Working Tree (Any Current or Future Library in libs/*)              |
 |         │                                                                     |
 |         ├───► [Axis 1: Standards & Safety] ─────────────────────────┐         |
 |         │       • MISRA C++:2023 & SEI CERT C++                     │         |
 |         │       • IWYU & std:: fixed-width integer compliance       │         |
+|         │       • Code Formatting (clang-format -i / check-format)  │         |
 |         │       • Core Isolation (Zero SDL/external deps in Core)   ▼         |
 |         │       • Fowler Code Smells (Primitive Obsession, etc.)[Prioritized] |
 |         │                                                       [ Findings  ] |
@@ -44,8 +43,9 @@ flowchart TD
         A1["MISRA C++:2023 Rule 7.0.6<br/>(No implicit signed/unsigned conversions)"]
         A2["SEI CERT ERR55-CPP<br/>(Zero heap in noexcept simulation paths)"]
         A3["IWYU & &lt;cstdint&gt; Policy<br/>(Direct includes, std:: prefixes)"]
-        A4["Core Isolation Rule<br/>(Zero SDL / external deps in Core)"]
-        A5["Fowler Code Smells<br/>(Primitive Obsession, Feature Envy)"]
+        A4["Clang-Format Style Policy<br/>(WebKit, 4-space, 120 col limit)"]
+        A5["Core Isolation Rule<br/>(Zero SDL / external deps in Core)"]
+        A6["Fowler Code Smells<br/>(Primitive Obsession, Feature Envy)"]
     end
 
     subgraph Axis2["Axis 2: Spec & Subsystem Correctness"]
@@ -55,43 +55,42 @@ flowchart TD
         B4["TileMap & Level Geometry<br/>(Grid boundaries, destructible tiles)"]
     end
 
-    subgraph Output["Review Synthesis"]
-        R["Prioritized Review Findings:<br/>1. Blockers (Safety/Spec violations, Core dependency leakage)<br/>2. Warnings (Code smells, numeric stability)<br/>3. Suggestions (Performance, style)"]
-    end
+    D --> Axis1
+    D --> Axis2
+    Axis1 --> Report["Prioritized Findings Report (P0 / P1 / P2)"]
+    Axis2 --> Report
 ```
 
 ---
 
-## 2. Axis 1: Standards & Safety Checklist
+## 2. Review Axis 1: Standards, Compliance & Safety
 
-1. **Fixed-Width Integers & `<cstdint>`:**
-   - Are all fixed-width integer types (`int32_t`, `uint8_t`, etc.) scoped under `std::`?
-   - Does every file using them explicitly `#include <cstdint>`?
+1. **MISRA C++:2023 & SEI CERT C++ Rules:**
+   - Are signed/unsigned conversions explicit via `static_cast`?
+   - Do callables passed to algorithms take exact `value_type`?
+   - Are `noexcept` functions on fast paths (frame loops, collision, targeting) free of heap allocation (`std::string`, `std::vector`, `new`, `std::make_unique`)?
 2. **Include-What-You-Use (IWYU):**
    - Are all standard templates and symbols directly included?
-   - Are forward declarations used in headers where pointers or references suffice?
-3. **Core Decoupling:**
-   - Does `libs/ShooterCore` have zero includes of SDL (`<SDL...>` or `<SDL2/...>`), OpenGL, or Qt?
-4. **Exception Safety & `noexcept`:**
-   - Are all methods on high-frequency simulation loops marked `noexcept` completely free of dynamic memory allocation?
-5. **Type Safety & Primitive Obsession:**
-   - Are physical quantities (coordinates, velocities, energy units, transform modes) wrapped into strong C++17 value objects?
+   - Does every file using fixed-width integers include `<cstdint>` and use `std::` qualification?
+3. **Code Formatting & Style:**
+   - Has all code been formatted with `clang-format -i` per [`.clang-format`](../../../.clang-format)?
+   - Does `python3 scripts/verify_clang_format.py` report zero violations?
+4. **Architectural Isolation:**
+   - Does `libs/ShooterCore` remain 100% free of external GUI, audio, or platform headers (`SDL`, `GL`, `Qt`, `windows.h`)?
+5. **Code Smells & Domain Modeling:**
+   - Is Primitive Obsession avoided by using strongly typed value objects?
+   - Are illegal states unrepresentable?
 
 ---
 
-## 3. Axis 2: Subsystem Integrity Checklist
+## 3. Review Axis 2: Functional Specification & Subsystem Correctness
 
-1. **Physics & Collision:**
-   - Are bounding box coordinates protected against inversions ($x_2 < x_1$ or $y_2 < y_1$)?
-   - Are division-by-zero checks present in raycast slopes and velocity normalizations?
-   - Does swept AABB collision prevent tunneling through thin tile walls?
-2. **Transformation State Machine:**
-   - Are height and width boundary transitions verified before changing mode (e.g., Jet cannot transform into Robot in a 1-tile high tunnel)?
-   - Is transformation animation and delay deterministic?
-3. **Weapons & Energy Management:**
-   - Does homing laser auto-targeting pick the nearest valid entity within line of sight?
-   - Does firing laser or raising shield deplete energy points deterministically?
-   - Does energy zeroing immediately disengage active shield and laser?
+1. **Subsystem Logic:**
+   - Are transformations, energy constraints, and hitbox transitions preserved?
+2. **Physics & Kinematics:**
+   - Are Swept AABB checks and velocities clamped to prevent tunneling?
+3. **Collision Detection:**
+   - Are TileMap boundaries correctly mapped and queried?
 4. **Command Queues & Hardware Abstraction:**
    - Does the core engine emit commands to `RenderCommandQueue` and `AudioCommandQueue` without direct hardware interaction?
 5. **Cross-Platform Portability:**
@@ -109,7 +108,11 @@ flowchart TD
    ```bash
    python scripts/verify_iwyu_cstdint.py --strict
    ```
-3. **Execute CTest Suite:**
+3. **Run Clang-Format Verification:**
+   ```bash
+   python scripts/verify_clang_format.py
+   ```
+4. **Execute CTest Suite:**
    ```bash
    ctest --test-dir build --output-on-failure
    ```

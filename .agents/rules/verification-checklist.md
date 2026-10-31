@@ -23,4 +23,4 @@ Before presenting any C++17 code snippet or committing changes, internally verif
 16. Does the code adhere to **IWYU (Include-What-You-Use)**: directly including every header for symbols, types, or templates used, never relying on transitive/indirect includes, and using forward declarations in headers where pointer/reference usage suffices?
 17. Do callables passed to STL algorithms (and iterator-range constructors) use the range's exact value_type, with any conversion made explicit inside project code?
 18. Are functions marked `noexcept` on fast paths (frame simulation loops, collision queries, weapon targeting) completely free of heap allocations (`std::string`, `std::vector`, `new`, `std::make_unique`) to prevent `std::terminate` under memory exhaustion (CERT ERR55-CPP)?
-
+19. Has all modified C++ code been formatted with clang-format (`clang-format -i` / `python3 scripts/verify_clang_format.py --files <modified_files>`) and verified to pass with zero style violations under `.clang-format`?

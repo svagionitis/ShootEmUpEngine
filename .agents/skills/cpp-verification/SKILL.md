@@ -6,7 +6,7 @@ description: >-
 
 # C++17 Verification Checklist & Safety Gate
 
-Before presenting any C++17 code snippet, writing an implementation file, or proposing a refactoring across any library in this repository, internally verify the code against this comprehensive 18-point safety gate.
+Before presenting any C++17 code snippet, writing an implementation file, or proposing a refactoring across any library in this repository, internally verify the code against this comprehensive 19-point safety gate.
 
 ---
 
@@ -22,10 +22,11 @@ Before presenting any C++17 code snippet, writing an implementation file, or pro
 |         ├── [2. Standards]: MISRA C++:2023, SEI CERT INT31-C / ERR55-CPP      |
 |         ├── [3. Architecture]: 0 Qt in Core libraries, Linux & Win32 support  |
 |         ├── [4. IWYU & Tooling]: Direct headers, scripts/verify_iwyu_cstdint.py|
-|         └── [5. Documentation]: Full Doxygen, relative paths, ASCII & Mermaid |
+|         ├── [5. Formatting]: clang-format -i, scripts/verify_clang_format.py  |
+|         └── [6. Documentation]: Full Doxygen, relative paths, ASCII & Mermaid |
 |         │                                                                     |
 |         ▼                                                                     |
-|   Pass All 18 Checks -> Approved for Output / Merge                           |
+|   Pass All 19 Checks -> Approved for Output / Merge                           |
 +-------------------------------------------------------------------------------+
 ```
 
@@ -42,12 +43,15 @@ flowchart TD
     D -->|Pass| E{"4. IWYU & &lt;cstdint&gt;"}
     
     E -->|Transitive header / bare uint8_t| E_FAIL["FAIL: Add direct include & std:: prefix"]
-    E -->|Pass| F["CODE VERIFIED: Ready to Present"]
+    E -->|Pass| F{"5. Clang-Format Style"}
+    
+    F -->|Style violation| F_FAIL["FAIL: Run clang-format -i"]
+    F -->|Pass| G["CODE VERIFIED: Ready to Present"]
 ```
 
 ---
 
-## 2. The 18-Point Verification Checklist
+## 2. The 19-Point Verification Checklist
 
 1. **RAII / Memory:** Did I use any raw `new` or `delete`? (If yes, rewrite using RAII/smart pointers like `std::unique_ptr`).
 2. **Explicit Initialization:** Are all variables explicitly initialized using `{}` where possible (e.g. `int count{0};`, `std::uint8_t byte{0x00};`)?
@@ -67,17 +71,23 @@ flowchart TD
 16. **IWYU (Include-What-You-Use):** Does every file directly include all headers it depends on without assuming transitive includes, using forward declarations in headers where pointer/reference usage suffices?
 17. **STL Value Types & Conversions:** Do callables passed to STL algorithms take the range's exact `value_type`? Are iterator-range constructors between differing signed/unsigned types avoided in favor of explicit `static_cast` in project code?
 18. **Exception Safety & Fast Paths (CERT ERR55-CPP):** Are all functions declared `noexcept` on simulation loops, collision queries, and weapon targeting **100% free of dynamic heap allocations** (`std::string`, `std::vector`, `new`, `std::make_unique`) to prevent `std::bad_alloc` triggering `std::terminate`?
+19. **Code Formatting (Clang-Format):** Has all modified C++ code been formatted in-place using `clang-format -i` and verified clean with `python3 scripts/verify_clang_format.py --files <modified_files>` per [`.agents/rules/clang-format.md`](../../rules/clang-format.md)?
 
 ---
 
 ## 3. Automated Pre-Commit Tooling
 
-Run the compliance scanner prior to staging or committing code:
+Run the compliance scanners prior to staging or committing code:
 
 ```bash
-# Verify specific modified files
+# Verify IWYU & <cstdint> on modified files
 python3 scripts/verify_iwyu_cstdint.py --files libs/ShooterCore/TransformSystem.h libs/ShooterCore/TransformSystem.cpp --strict
 
-# Run across an entire library
-python3 scripts/verify_iwyu_cstdint.py libs/ShooterCore
+# Format and verify code style with clang-format
+clang-format -i libs/ShooterCore/TransformSystem.h libs/ShooterCore/TransformSystem.cpp
+python3 scripts/verify_clang_format.py --files libs/ShooterCore/TransformSystem.h libs/ShooterCore/TransformSystem.cpp
+
+# Repository-wide formatting targets
+cmake --build build --target format
+cmake --build build --target check-format
 ```
