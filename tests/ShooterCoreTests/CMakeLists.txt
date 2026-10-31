@@ -1,6 +1,8 @@
 add_executable(ShooterCoreTests
     Main.cpp
     TestAnimationController.cpp
+    TestBossController.cpp
+    TestCameraSystem.cpp
     TestCollisionSolver.cpp
     TestCommandQueues.cpp
     TestDeterminismSoak.cpp
@@ -9,9 +11,13 @@ add_executable(ShooterCoreTests
     TestEntityPool.cpp
     TestGameEngine.cpp
     TestHitbox.cpp
+    TestLabyrinthArchitecture.cpp
+    TestMinimapRadar.cpp
     TestNestManager.cpp
     TestParticlePool.cpp
     TestSecondaryArsenal.cpp
+    TestSecretManager.cpp
+    TestSecuritySystem.cpp
     TestShieldSystem.cpp
     TestSupplyDropSystem.cpp
     TestTileMap.cpp
@@ -63,3 +69,9 @@ register_shooter_test(ShooterCore_SecondaryArsenal SecondaryArsenal "combat;weap
 register_shooter_test(ShooterCore_EnemyAi          EnemyAi          "unit;ai"            10)
 register_shooter_test(ShooterCore_NestManager      NestManager      "unit;spawner"       10)
 register_shooter_test(ShooterCore_SupplyDrop       SupplyDrop       "unit;logistics"     10)
+register_shooter_test(ShooterCore_Labyrinth        LabyrinthArchitecture "unit;spatial"   10)
+register_shooter_test(ShooterCore_SecuritySystem   SecuritySystem   "unit;security"      10)
+register_shooter_test(ShooterCore_SecretManager    SecretManager    "unit;secrets"       10)
+register_shooter_test(ShooterCore_CameraSystem     CameraSystem     "unit;camera"        10)
+register_shooter_test(ShooterCore_MinimapRadar     MinimapRadar     "unit;minimap"       10)
+register_shooter_test(ShooterCore_BossController   BossController   "combat;boss"        15)

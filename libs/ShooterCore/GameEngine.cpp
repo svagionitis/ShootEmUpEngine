@@ -10,12 +10,18 @@
 #include <glog/logging.h>
 
 #include "AnimationController.h"
+#include "BossController.h"
+#include "CameraSystem.h"
 #include "CollisionSolver.h"
 #include "EnemyAiSystem.h"
 #include "Hitbox.h"
+#include "LabyrinthMap.h"
+#include "MinimapRadar.h"
 #include "NestManager.h"
 #include "ParticlePool.h"
 #include "SecondaryArsenal.h"
+#include "SecretManager.h"
+#include "SecuritySystem.h"
 #include "SupplyDropSystem.h"
 #include "TileMap.h"
 #include "TransformSystem.h"
@@ -26,9 +32,8 @@ namespace ShooterCore {
 
 GameEngine::GameEngine() noexcept
 {
-    camera_.pos = WorldPos { 0.0f, 0.0f };
-    camera_.width = 320.0f;
-    camera_.height = 240.0f;
+    cameraSys_.setPosition(WorldPos { 0.0f, 0.0f });
+    camera_ = cameraSys_.viewport();
 }
 
 Hitbox GameEngine::computeHitbox(WorldPos pos) const noexcept
@@ -57,12 +62,14 @@ void GameEngine::initLevel(const TileMap& map, WorldPos playerSpawn) noexcept
     playerPos_ = playerSpawn;
     playerVel_ = Velocity { 0.0f, 0.0f };
     playerFacing_ = FacingDirection::Right;
-    energy_ = EnergyPoints { EnergyPoints::kDefaultMax };
+    playerMaxEnergy_ = EnergyPoints::kDefaultMax;
+    energy_ = EnergyPoints { playerMaxEnergy_ };
     onGround_ = false;
     isAlive_ = true;
 
     playerBox_ = computeHitbox(playerPos_);
 
+    cameraSys_.setPosition(playerPos_);
     updateCamera();
 }
 
@@ -89,6 +96,14 @@ void GameEngine::step(DeltaTime dt, EngineInput input) noexcept
 
     anim_.update(dt);
     particlePool_.update(dt);
+    minimapRadar_.updateDiscovery(playerPos_);
+    secretMgr_.checkPickup(playerBox_, energy_, playerMaxEnergy_, audioQueue_);
+    securitySys_.syncTiles(map_);
+
+    if (bossController_.phase() != BossPhase::Dormant && !bossController_.isDefeated()) {
+        bossController_.update(dt, playerPos_, entities_, particlePool_, audioQueue_);
+    }
+
     updateInput(dt, input);
     updatePhysics(dt, input);
     updateWeapons(dt, input);
@@ -274,6 +289,13 @@ void GameEngine::updateWeapons(DeltaTime dt, EngineInput input) noexcept
     // 5. Apply laser damage to locked entity & emit visual FX
     const BeamSegment beam { weaponSys_.getBeamSegment() };
     if (beam.active) {
+        const Hitbox beamHit { beam.endpoint, WorldPos { beam.endpoint.x + 8.0f, beam.endpoint.y + 8.0f } };
+        securitySys_.damageAt(beamHit, 1U, audioQueue_);
+        secretMgr_.damageSecretWall(beam.endpoint.toTileCoord(kTileSize), map_, audioQueue_);
+        if (bossController_.phase() != BossPhase::Dormant && !bossController_.isDefeated()) {
+            bossController_.applyDamage(beamHit, 1U, audioQueue_);
+        }
+
         if (beam.lockedToTarget && beam.targetId < 1000U) {
             const std::size_t slotIdx { static_cast<std::size_t>(beam.targetId) };
             if (slotIdx < entities_.capacity()) {
@@ -365,16 +387,16 @@ void GameEngine::updateEntities(DeltaTime dt) noexcept
 
 void GameEngine::updateCamera() noexcept
 {
-    const float halfW { camera_.width * 0.5f };
-    const float halfH { camera_.height * 0.5f };
-    const float mapPixelW { static_cast<float>(map_.width()) * kTileSize };
-    const float mapPixelH { static_cast<float>(map_.height()) * kTileSize };
+    const SectorBounds sector { WorldPos { 0.0f, 0.0f },
+        WorldPos { static_cast<float>(map_.width()) * kTileSize, static_cast<float>(map_.height()) * kTileSize } };
 
-    const float maxCamX { std::max(0.0f, mapPixelW - camera_.width) };
-    const float maxCamY { std::max(0.0f, mapPixelH - camera_.height) };
+    cameraSys_.update(DeltaTime { 0.016f }, playerPos_, sector);
 
-    camera_.pos.x = std::clamp(playerPos_.x - halfW, 0.0f, maxCamX);
-    camera_.pos.y = std::clamp(playerPos_.y - halfH, 0.0f, maxCamY);
+    if (LabyrinthMap::getBossArenaBounds().contains(playerPos_) && bossController_.phase() != BossPhase::Defeated) {
+        cameraSys_.lockArena(LabyrinthMap::getBossArenaBounds());
+    }
+
+    camera_ = cameraSys_.viewport();
 }
 
 void GameEngine::emitCommands() noexcept
@@ -510,8 +532,21 @@ void GameEngine::emitCommands() noexcept
     }
 
     // 7. HUD energy bar
-    const float energyPct { static_cast<float>(energy_.value()) / static_cast<float>(EnergyPoints::kDefaultMax) };
+    const float energyPct { static_cast<float>(energy_.value()) / static_cast<float>(playerMaxEnergy_) };
     renderQueue_.pushBar(WorldPos { 8.0f, 8.0f }, 100.0f, 6.0f, energyPct, ColorRgba { 0U, 220U, 255U, 255U });
+
+    // 8. Phase 12: Security barriers & power generators
+    securitySys_.emitRender(renderQueue_);
+
+    // 9. Phase 12: Concealed Energy Tanks
+    secretMgr_.emitRender(renderQueue_);
+
+    // 10. Phase 12: Multi-segment Dreadnought Boss
+    bossController_.emitRender(renderQueue_);
+
+    // 11. Phase 12: Cockpit HUD Minimap Radar
+    minimapRadar_.emitCommands(renderQueue_, playerPos_, securitySys_, bossController_.corePosition(),
+        bossController_.phase() != BossPhase::Dormant && !bossController_.isDefeated());
 }
 
 } // namespace ShooterCore

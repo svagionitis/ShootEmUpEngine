@@ -51,18 +51,28 @@ public:
 
     /// @brief Query whether a coordinate represents an impassable solid obstacle.
     /// @param[in] coord Discrete grid coordinate.
-    /// @return true if SolidWall or DestructibleWall; false otherwise.
+    /// @return true if SolidWall, DestructibleWall, SecretWall, or Forcefield; false otherwise.
     [[nodiscard]] bool isSolid(TileCoord coord) const noexcept;
 
     /// @brief Query whether a coordinate holds a destructible block.
     /// @param[in] coord Discrete grid coordinate.
-    /// @return true if DestructibleWall; false otherwise.
+    /// @return true if DestructibleWall or SecretWall; false otherwise.
     [[nodiscard]] bool isDestructible(TileCoord coord) const noexcept;
 
     /// @brief Query whether a coordinate holds a hazard cell.
     /// @param[in] coord Discrete grid coordinate.
     /// @return true if Hazard; false otherwise.
     [[nodiscard]] bool isHazard(TileCoord coord) const noexcept;
+
+    /// @brief Query whether a coordinate holds a concealed secret wall.
+    /// @param[in] coord Discrete grid coordinate.
+    /// @return true if SecretWall; false otherwise.
+    [[nodiscard]] bool isSecret(TileCoord coord) const noexcept;
+
+    /// @brief Query whether a coordinate holds an active forcefield.
+    /// @param[in] coord Discrete grid coordinate.
+    /// @return true if Forcefield; false otherwise.
+    [[nodiscard]] bool isForcefield(TileCoord coord) const noexcept;
 
     /// @brief Query remaining durability of a destructible obstacle.
     /// @param[in] coord Discrete grid coordinate.

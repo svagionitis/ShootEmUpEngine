@@ -113,5 +113,11 @@ void runSecondaryArsenalTests() noexcept;
 void runEnemyAiTests() noexcept;
 void runNestManagerTests() noexcept;
 void runSupplyDropTests() noexcept;
+void runLabyrinthArchitectureTests() noexcept;
+void runSecuritySystemTests() noexcept;
+void runSecretManagerTests() noexcept;
+void runCameraSystemTests() noexcept;
+void runMinimapRadarTests() noexcept;
+void runBossControllerTests() noexcept;
 
 } // namespace ShooterCore::Test

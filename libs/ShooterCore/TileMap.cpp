@@ -44,17 +44,29 @@ TileType TileMap::getTile(TileCoord coord) const noexcept
 bool TileMap::isSolid(TileCoord coord) const noexcept
 {
     const TileType type { getTile(coord) };
-    return type == TileType::SolidWall || type == TileType::DestructibleWall;
+    return type == TileType::SolidWall || type == TileType::DestructibleWall || type == TileType::SecretWall
+        || type == TileType::Forcefield;
 }
 
 bool TileMap::isDestructible(TileCoord coord) const noexcept
 {
-    return getTile(coord) == TileType::DestructibleWall;
+    const TileType type { getTile(coord) };
+    return type == TileType::DestructibleWall || type == TileType::SecretWall;
 }
 
 bool TileMap::isHazard(TileCoord coord) const noexcept
 {
     return getTile(coord) == TileType::Hazard;
+}
+
+bool TileMap::isSecret(TileCoord coord) const noexcept
+{
+    return getTile(coord) == TileType::SecretWall;
+}
+
+bool TileMap::isForcefield(TileCoord coord) const noexcept
+{
+    return getTile(coord) == TileType::Forcefield;
 }
 
 TileHealth TileMap::getHealth(TileCoord coord) const noexcept
@@ -73,7 +85,7 @@ void TileMap::setTile(TileCoord coord, TileType type) noexcept
 
     const std::size_t idx { toIndex(coord) };
     tiles_[idx] = type;
-    if (type == TileType::DestructibleWall) {
+    if (type == TileType::DestructibleWall || type == TileType::SecretWall) {
         health_[idx].reset();
     } else {
         health_[idx] = TileHealth { 0U };
@@ -97,7 +109,7 @@ bool TileMap::damageTile(TileCoord coord) noexcept
     }
 
     const std::size_t idx { toIndex(coord) };
-    if (tiles_[idx] != TileType::DestructibleWall) {
+    if (tiles_[idx] != TileType::DestructibleWall && tiles_[idx] != TileType::SecretWall) {
         return false;
     }
 
@@ -118,7 +130,7 @@ bool TileMap::destroyTile(TileCoord coord) noexcept
     }
 
     const std::size_t idx { toIndex(coord) };
-    if (tiles_[idx] != TileType::DestructibleWall) {
+    if (tiles_[idx] != TileType::DestructibleWall && tiles_[idx] != TileType::SecretWall) {
         return false;
     }
 

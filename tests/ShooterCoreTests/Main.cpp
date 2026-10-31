@@ -100,6 +100,36 @@ TEST(ShooterCoreTests, SupplyDrop)
     ShooterCore::Test::runSupplyDropTests();
 }
 
+TEST(ShooterCoreTests, LabyrinthArchitecture)
+{
+    ShooterCore::Test::runLabyrinthArchitectureTests();
+}
+
+TEST(ShooterCoreTests, SecuritySystem)
+{
+    ShooterCore::Test::runSecuritySystemTests();
+}
+
+TEST(ShooterCoreTests, SecretManager)
+{
+    ShooterCore::Test::runSecretManagerTests();
+}
+
+TEST(ShooterCoreTests, CameraSystem)
+{
+    ShooterCore::Test::runCameraSystemTests();
+}
+
+TEST(ShooterCoreTests, MinimapRadar)
+{
+    ShooterCore::Test::runMinimapRadarTests();
+}
+
+TEST(ShooterCoreTests, BossController)
+{
+    ShooterCore::Test::runBossControllerTests();
+}
+
 int main(int argc, char* argv[])
 {
     google::InitGoogleLogging(argv[0]);

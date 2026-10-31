@@ -83,6 +83,43 @@ void runTypeTests() noexcept
     TEST_ASSERT(!emptyAmmo.hasAmmo(), "Empty ammo hasAmmo must be false");
     emptyAmmo.consume();
     TEST_ASSERT(emptyAmmo.count() == 0U, "Empty ammo consume must not underflow");
+
+    // Phase 12: SectorBounds tests
+    const SectorBounds sector { { 0.0f, 0.0f }, { 100.0f, 100.0f } };
+    TEST_ASSERT(sector.contains(WorldPos { 50.0f, 50.0f }), "Sector must contain (50, 50)");
+    TEST_ASSERT(sector.contains(WorldPos { 0.0f, 0.0f }), "Sector must contain min corner");
+    TEST_ASSERT(sector.contains(WorldPos { 100.0f, 100.0f }), "Sector must contain max corner");
+    TEST_ASSERT(!sector.contains(WorldPos { 101.0f, 50.0f }), "Sector must not contain point outside x");
+    TEST_ASSERT(!sector.contains(WorldPos { 50.0f, -1.0f }), "Sector must not contain point outside y");
+
+    // Phase 12: GeneratorHealth tests
+    GeneratorHealth genHp { 100U };
+    TEST_ASSERT(genHp.value() == 100U, "GeneratorHealth must initialize to 100");
+    TEST_ASSERT(genHp.isAlive(), "Generator must be alive");
+    genHp.applyDamage(40U);
+    TEST_ASSERT(genHp.value() == 60U, "Generator health must be 60 after 40 damage");
+    genHp.applyDamage(80U);
+    TEST_ASSERT(genHp.value() == 0U, "Generator health must clamp to 0 on excess damage");
+    TEST_ASSERT(!genHp.isAlive(), "Generator must not be alive at 0 HP");
+
+    // Phase 12: BossHealth tests
+    BossHealth bossHp { 150U, 150U };
+    TEST_ASSERT(bossHp.current() == 150U, "Boss health current must be 150");
+    TEST_ASSERT(bossHp.maximum() == 150U, "Boss health max must be 150");
+    TEST_ASSERT(!bossHp.isDestroyed(), "Boss segment must not be destroyed");
+    bossHp.applyDamage(50U);
+    TEST_ASSERT(bossHp.current() == 100U, "Boss health must be 100 after 50 damage");
+    bossHp.applyDamage(200U);
+    TEST_ASSERT(bossHp.current() == 0U, "Boss health must clamp to 0");
+    TEST_ASSERT(bossHp.isDestroyed(), "Boss segment must report isDestroyed");
+
+    // Phase 12: EnergyTank tests
+    const WorldPos tankPos { 256.0f, 128.0f };
+    EnergyTank tank { tankPos };
+    TEST_ASSERT(tank.position().x == 256.0f && tank.position().y == 128.0f, "Tank position must match");
+    TEST_ASSERT(!tank.isCollected(), "Tank must not be collected initially");
+    tank.collect();
+    TEST_ASSERT(tank.isCollected(), "Tank must report collected after collect()");
 }
 
 } // namespace ShooterCore::Test

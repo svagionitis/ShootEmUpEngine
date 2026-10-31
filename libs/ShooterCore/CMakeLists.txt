@@ -2,14 +2,22 @@ add_library(ShooterCore STATIC
     AnimationController.cpp
     AnimationController.h
     AudioCommandQueue.cpp
+    BossController.cpp
+    BossController.h
+    CameraSystem.cpp
+    CameraSystem.h
     CollisionSolver.cpp
     EnemyAiSystem.cpp
     EnemyAiSystem.h
     EntityPool.cpp
     GameEngine.cpp
     Hitbox.cpp
+    LabyrinthMap.cpp
+    LabyrinthMap.h
     Logger.cpp
     Logger.h
+    MinimapRadar.cpp
+    MinimapRadar.h
     NestManager.cpp
     NestManager.h
     ParticlePool.cpp
@@ -17,6 +25,10 @@ add_library(ShooterCore STATIC
     RenderCommandQueue.cpp
     SecondaryArsenal.cpp
     SecondaryArsenal.h
+    SecretManager.cpp
+    SecretManager.h
+    SecuritySystem.cpp
+    SecuritySystem.h
     SupplyDropSystem.cpp
     SupplyDropSystem.h
     TileMap.cpp

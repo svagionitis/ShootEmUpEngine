@@ -47,6 +47,7 @@ private:
 class EnergyPoints final {
 public:
     static constexpr std::uint16_t kDefaultMax { 100U };
+    static constexpr std::uint16_t kAbsoluteMax { 200U };
 
     /// @brief Construct zero energy points.
     constexpr EnergyPoints() noexcept
@@ -58,6 +59,14 @@ public:
     /// @param[in] val Desired energy amount.
     explicit constexpr EnergyPoints(std::uint16_t val) noexcept
         : value_ { std::min(val, kDefaultMax) }
+    {
+    }
+
+    /// @brief Construct energy points clamped to explicit maximum capacity.
+    /// @param[in] val Desired energy amount.
+    /// @param[in] maxCap Upper bound cap.
+    explicit constexpr EnergyPoints(std::uint16_t val, std::uint16_t maxCap) noexcept
+        : value_ { std::min(val, std::min(maxCap, kAbsoluteMax)) }
     {
     }
 
@@ -96,11 +105,12 @@ public:
 
     /// @brief Replenish energy clamped to maximum.
     /// @param[in] gain Energy amount to add.
-    constexpr void replenish(EnergyPoints gain) noexcept
+    /// @param[in] maxCap Optional explicit maximum capacity limit.
+    constexpr void replenish(EnergyPoints gain, std::uint16_t maxCap = kDefaultMax) noexcept
     {
         const std::uint32_t total { static_cast<std::uint32_t>(value_) + static_cast<std::uint32_t>(gain.value_) };
-        const std::uint32_t maxVal { static_cast<std::uint32_t>(kDefaultMax) };
-        value_ = static_cast<std::uint16_t>(std::min(total, maxVal));
+        const std::uint32_t cap { static_cast<std::uint32_t>(std::min(maxCap, kAbsoluteMax)) };
+        value_ = static_cast<std::uint16_t>(std::min(total, cap));
     }
 
     /// @brief Equality comparison.
@@ -229,7 +239,14 @@ private:
 };
 
 /// @brief Classification of cell materials within the tilemap.
-enum class TileType : std::uint8_t { Empty = 0U, SolidWall = 1U, DestructibleWall = 2U, Hazard = 3U };
+enum class TileType : std::uint8_t {
+    Empty = 0U,
+    SolidWall = 1U,
+    DestructibleWall = 2U,
+    Hazard = 3U,
+    SecretWall = 4U,
+    Forcefield = 5U
+};
 
 /// @class TileHealth
 /// @brief Durability state for destructible obstacle tiles.
@@ -466,7 +483,12 @@ enum class SoundEffectId : std::uint8_t {
     FlashBombExplode = 12U,
     CanisterPickup = 13U,
     EnemyShoot = 14U,
-    WeaponSelect = 15U
+    WeaponSelect = 15U,
+    WallCrumble = 16U,
+    SecurityAlarm = 17U,
+    BossRoar = 18U,
+    BossExplode = 19U,
+    PowerUp = 20U
 };
 
 /// @brief Music track identifier for presentation audio stream.
@@ -751,6 +773,165 @@ struct BioNest final {
     std::uint16_t health { 80U };
     bool active { false };
     bool destroyed { false };
+};
+
+/// @enum class SectorId
+/// @brief Distinct geographical sectors within the sprawling labyrinth.
+enum class SectorId : std::uint8_t {
+    Alpha = 0U, ///< Cavern Entry & Vertical Descent Shaft
+    Beta = 1U, ///< Claustrophobic Jet Transit Flues & Hazard Spikes
+    Gamma = 2U, ///< Security Complex & Generator Matrix
+    Delta = 3U, ///< Sealed Boss Arena Enclosure
+    Count = 4U
+};
+
+/// @struct SectorBounds
+/// @brief World coordinate bounding rectangle for an individual labyrinth sector.
+struct SectorBounds final {
+    WorldPos min { 0.0f, 0.0f };
+    WorldPos max { 0.0f, 0.0f };
+
+    [[nodiscard]] constexpr bool contains(WorldPos pos) const noexcept
+    {
+        return (pos.x >= min.x) && (pos.x <= max.x) && (pos.y >= min.y) && (pos.y <= max.y);
+    }
+};
+
+/// @enum class SecurityGateState
+/// @brief Physical operational state of forcefield and security blast doors.
+enum class SecurityGateState : std::uint8_t {
+    Locked = 0U, ///< Impassable barrier; active energy forcefield
+    Deactivating = 1U, ///< Power cut; energy field collapsing
+    Open = 2U ///< Fully disengaged; clearance unobstructed
+};
+
+/// @class GeneratorHealth
+/// @brief Durability state for stationary security power generators.
+class GeneratorHealth final {
+public:
+    static constexpr std::uint16_t kMaxHealth { 100U };
+
+    constexpr GeneratorHealth() noexcept = default;
+
+    explicit constexpr GeneratorHealth(std::uint16_t hp) noexcept
+        : hp_ { std::min(hp, kMaxHealth) }
+    {
+    }
+
+    [[nodiscard]] constexpr std::uint16_t value() const noexcept
+    {
+        return hp_;
+    }
+    [[nodiscard]] constexpr bool isAlive() const noexcept
+    {
+        return hp_ > 0U;
+    }
+
+    constexpr void applyDamage(std::uint16_t amount) noexcept
+    {
+        if (amount >= hp_) {
+            hp_ = 0U;
+        } else {
+            hp_ -= amount;
+        }
+    }
+
+private:
+    std::uint16_t hp_ { kMaxHealth };
+};
+
+/// @enum class BossSegmentType
+/// @brief Anatomical classification of multi-segment boss components.
+enum class BossSegmentType : std::uint8_t {
+    CentralCore = 0U,
+    LeftArmorPlate = 1U,
+    RightArmorPlate = 2U,
+    TopTurret = 3U,
+    BottomTurret = 4U,
+    Count = 5U
+};
+
+/// @enum class BossPhase
+/// @brief Combat escalation state machine for the stage guardian.
+enum class BossPhase : std::uint8_t {
+    Dormant = 0U,
+    ShieldedBarrage = 1U,
+    CoreExposure = 2U,
+    EnragedDesperation = 3U,
+    Defeated = 4U
+};
+
+/// @class BossHealth
+/// @brief Segmented hitpoint counter for boss sub-components.
+class BossHealth final {
+public:
+    constexpr BossHealth() noexcept = default;
+
+    explicit constexpr BossHealth(std::uint16_t hp, std::uint16_t maxHp) noexcept
+        : hp_ { std::min(hp, maxHp) }
+        , maxHp_ { maxHp }
+    {
+    }
+
+    [[nodiscard]] constexpr std::uint16_t current() const noexcept
+    {
+        return hp_;
+    }
+    [[nodiscard]] constexpr std::uint16_t maximum() const noexcept
+    {
+        return maxHp_;
+    }
+    [[nodiscard]] constexpr bool isDestroyed() const noexcept
+    {
+        return hp_ == 0U;
+    }
+
+    constexpr void applyDamage(std::uint16_t amount) noexcept
+    {
+        if (amount >= hp_) {
+            hp_ = 0U;
+        } else {
+            hp_ -= amount;
+        }
+    }
+
+private:
+    std::uint16_t hp_ { 100U };
+    std::uint16_t maxHp_ { 100U };
+};
+
+/// @class EnergyTank
+/// @brief Permanent upgrade canister expanding the player craft's energy storage.
+class EnergyTank final {
+public:
+    static constexpr std::uint16_t kCapacityBonus { 20U };
+    static constexpr std::uint16_t kMaxPlayerEnergy { 200U };
+
+    constexpr EnergyTank() noexcept = default;
+
+    explicit constexpr EnergyTank(WorldPos pos) noexcept
+        : pos_ { pos }
+        , collected_ { false }
+    {
+    }
+
+    [[nodiscard]] constexpr WorldPos position() const noexcept
+    {
+        return pos_;
+    }
+    [[nodiscard]] constexpr bool isCollected() const noexcept
+    {
+        return collected_;
+    }
+
+    constexpr void collect() noexcept
+    {
+        collected_ = true;
+    }
+
+private:
+    WorldPos pos_ { 0.0f, 0.0f };
+    bool collected_ { false };
 };
 
 } // namespace ShooterCore

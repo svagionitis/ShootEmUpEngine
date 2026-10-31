@@ -7,15 +7,21 @@
 
 #include "AnimationController.h"
 #include "AudioCommandQueue.h"
+#include "BossController.h"
+#include "CameraSystem.h"
 #include "CollisionSolver.h"
 #include "EnemyAiSystem.h"
 #include "EngineInput.h"
 #include "EntityPool.h"
 #include "Hitbox.h"
+#include "LabyrinthMap.h"
+#include "MinimapRadar.h"
 #include "NestManager.h"
 #include "ParticlePool.h"
 #include "RenderCommandQueue.h"
 #include "SecondaryArsenal.h"
+#include "SecretManager.h"
+#include "SecuritySystem.h"
 #include "SupplyDropSystem.h"
 #include "TileMap.h"
 #include "TransformSystem.h"
@@ -203,6 +209,61 @@ public:
         return enemyAi_;
     }
 
+    [[nodiscard]] const CameraSystem& getCameraSystem() const noexcept
+    {
+        return cameraSys_;
+    }
+
+    [[nodiscard]] CameraSystem& getCameraSystem() noexcept
+    {
+        return cameraSys_;
+    }
+
+    [[nodiscard]] const SecuritySystem& getSecuritySystem() const noexcept
+    {
+        return securitySys_;
+    }
+
+    [[nodiscard]] SecuritySystem& getSecuritySystem() noexcept
+    {
+        return securitySys_;
+    }
+
+    [[nodiscard]] const SecretManager& getSecretManager() const noexcept
+    {
+        return secretMgr_;
+    }
+
+    [[nodiscard]] SecretManager& getSecretManager() noexcept
+    {
+        return secretMgr_;
+    }
+
+    [[nodiscard]] const MinimapRadar& getMinimapRadar() const noexcept
+    {
+        return minimapRadar_;
+    }
+
+    [[nodiscard]] MinimapRadar& getMinimapRadar() noexcept
+    {
+        return minimapRadar_;
+    }
+
+    [[nodiscard]] const BossController& getBossController() const noexcept
+    {
+        return bossController_;
+    }
+
+    [[nodiscard]] BossController& getBossController() noexcept
+    {
+        return bossController_;
+    }
+
+    [[nodiscard]] std::uint16_t getMaxEnergy() const noexcept
+    {
+        return playerMaxEnergy_;
+    }
+
     /// @brief Spawn an enemy entity into the simulation.
     /// @param[in] type Entity classification category.
     /// @param[in] pos Continuous world coordinates.
@@ -229,6 +290,11 @@ private:
     SupplyDropSystem supplyDropSys_ { };
     NestManager nestManager_ { };
     EnemyAiSystem enemyAi_ { };
+    CameraSystem cameraSys_ { };
+    SecuritySystem securitySys_ { };
+    SecretManager secretMgr_ { };
+    MinimapRadar minimapRadar_ { };
+    BossController bossController_ { };
 
     RenderCommandQueue renderQueue_ { };
     AudioCommandQueue audioQueue_ { };
@@ -238,6 +304,7 @@ private:
     Hitbox playerBox_ { };
     FacingDirection playerFacing_ { FacingDirection::Right };
     EnergyPoints energy_ { EnergyPoints::kDefaultMax };
+    std::uint16_t playerMaxEnergy_ { EnergyPoints::kDefaultMax };
     ShieldGauge playerShield_ { 0U };
     CameraViewport camera_ { };
     bool onGround_ { false };

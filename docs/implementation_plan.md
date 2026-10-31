@@ -406,8 +406,9 @@ flowchart TD
 
 ---
 
-### Phase 12: Sprawling Labyrinth Architecture, Secret Passages & Boss Enclosures
+### Phase 12: Sprawling Labyrinth Architecture, Secret Passages & Boss Enclosure
 - **Objective**: Transition from a single-corridor test level into authentic sprawling, non-linear maze stages.
+- **Detailed Plan**: See [docs/phase12_plan.md](phase12_plan.md) for full architectural and implementation specifications.
 - **Key Deliverables**:
   - **Level Map Architecture**:
     - Multi-room layout with vertical shafts, 1-tile crawling tunnels requiring Jet mode, and security forcefields.
@@ -418,6 +419,46 @@ flowchart TD
     - Minimap / radar display showing player position relative to active sectors.
   - **Stage Boss Encounters**:
     - Multi-segment mechanical guardians with vulnerable core plates and attack pattern phases.
+
+### ASCII Labyrinth & Boss Arena Architecture
+```
++-------------------------------------------------------------------------------+
+|                       SPRAWLING LABYRINTH & BOSS ARENA                        |
+|                                                                               |
+|   [Sector Alpha: Cavern] ──> [Sector Beta: 1-Tile Jet Conduit] (16px Flue)    |
+|             |                                   |                             |
+|             v                                   v                             |
+|   [Secret Masonry Wall]               [Hazard Spikes & Turrets]               |
+|      (Laser Breach)                             |                             |
+|             v                                   v                             |
+|   [Hidden Energy Tank]                [Sector Gamma: Security Node Matrix]    |
+|                                                 |                             |
+|                                                 v (Generators Destroyed)      |
+|                                       [Deactivated Forcefield]                |
+|                                                 |                             |
+|                                                 v                             |
+|                                       [Sector Delta: Sealed Arena]            |
+|                                       • Portcullis drops & camera locks       |
+|                                       • Multi-segment Dreadnought Guardian    |
+|                                       • Core exposure & defeat warp portal    |
++-------------------------------------------------------------------------------+
+```
+
+### Mermaid Labyrinth Progression Flow
+```mermaid
+flowchart TD
+    A["Spawn in Sector Alpha"] --> B{"Encounter 1-Tile Flue?"}
+    B -- Yes --> C["Transform into Jet Mode (Clearance Granted)"]
+    B -- No --> D["Robot Ground Traversal"]
+    C & D --> E["Scan Walls for Secret Masonry"]
+    E --> F["Breach Secret Wall -> Collect Energy Tank (+20 Max HP)"]
+    C & D --> G["Infiltrate Sector Gamma Security Complex"]
+    G --> H["Neutralize 3 Remote Power Generators"]
+    H --> I["Forcefield Barrier Disengages"]
+    I --> J["Enter Sector Delta: Boss Enclosure Locks"]
+    J --> K["Engage Dreadnought Guardian Multi-Segment Battle"]
+    K --> L["Core Destroyed -> Level Complete Exit Portal"]
+```
 
 ---
 
