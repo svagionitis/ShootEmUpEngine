@@ -60,6 +60,11 @@ TEST(ShooterCoreTests, EntityPool)
     ShooterCore::Test::runEntityPoolTests();
 }
 
+TEST(ShooterCoreTests, ParticlePool)
+{
+    ShooterCore::Test::runParticlePoolTests();
+}
+
 TEST(ShooterCoreTests, GameEngine)
 {
     ShooterCore::Test::runGameEngineTests();

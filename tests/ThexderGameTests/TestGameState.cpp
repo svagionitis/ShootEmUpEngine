@@ -9,10 +9,8 @@
 
 namespace ThexderGame::Test {
 
-void runGameStateTests()
+static void testStateTransitions() noexcept
 {
-    LOG(INFO) << "Executing GameState FSM & Camera Tracking Tests...";
-
     GameState game { };
 
     // 1. Initial State
@@ -37,9 +35,10 @@ void runGameStateTests()
 
     TEST_ASSERT(queue.count() > 0U, "Playing state must emit non-empty render queue");
     TEST_ASSERT(queue.count() < ShooterCore::RenderCommandQueue::kCapacity, "Render commands must fit in capacity");
+}
 
-    // 5. Game Over Transition on Depleted Energy
-    // Create new game state without god mode
+static void testGameOverTransition() noexcept
+{
     GameState playState { };
     playState.setMode(GameStateMode::Playing);
     playState.setGodMode(false);
@@ -50,8 +49,10 @@ void runGameStateTests()
     playState.step(ShooterCore::DeltaTime { 0.016f }, ShooterCore::EngineInput { });
     TEST_ASSERT_EQ(static_cast<std::uint8_t>(playState.getMode()), static_cast<std::uint8_t>(GameStateMode::GameOver),
         "Depleting energy must trigger GameOver state");
+}
 
-    // 6. God Mode Protection
+static void testGodModeProtection() noexcept
+{
     GameState godState { };
     godState.setMode(GameStateMode::Playing);
     godState.setGodMode(true);
@@ -61,6 +62,14 @@ void runGameStateTests()
     godState.step(ShooterCore::DeltaTime { 0.016f }, ShooterCore::EngineInput { });
     TEST_ASSERT_EQ(static_cast<std::uint8_t>(godState.getMode()), static_cast<std::uint8_t>(GameStateMode::Playing),
         "God mode must prevent GameOver transition");
+}
+
+void runGameStateTests()
+{
+    LOG(INFO) << "Executing GameState FSM & Camera Tracking Tests...";
+    testStateTransitions();
+    testGameOverTransition();
+    testGodModeProtection();
 }
 
 } // namespace ThexderGame::Test

@@ -36,12 +36,13 @@ public:
     static constexpr std::size_t kMaxTargets { 32U };
     static constexpr float kLaserRangeRobot { 240.0f };
     static constexpr float kLaserRangeJet { 288.0f };
-    static constexpr float kRobotConeCos { 0.2588f }; // cos(75 deg)
-    static constexpr float kJetConeCos { 0.7071f }; // cos(45 deg)
+    static constexpr float kRobotConeCos { -1.0f }; // 360-degree omni-directional
+    static constexpr float kJetConeCos { 0.50f }; // cos(60 deg) forward cone
     static constexpr float kLaserDrainRate { 10.0f }; // points / sec
     static constexpr float kShieldDrainRate { 15.0f }; // points / sec
     static constexpr float kTileDamageRate { 5.0f }; // hits / sec
     static constexpr float kShieldMargin { 4.0f }; // pixels beyond craft
+    static constexpr float kTargetStickinessBonus { 0.25f };
 
     constexpr WeaponSystem() noexcept = default;
 
@@ -64,6 +65,20 @@ public:
     [[nodiscard]] constexpr BeamSegment getBeamSegment() const noexcept
     {
         return beam_;
+    }
+
+    /// @brief Retrieve active multi-segment lightning arc for presentation.
+    /// @return Const reference to active LightningArc struct.
+    [[nodiscard]] constexpr const LightningArc& getLightningArc() const noexcept
+    {
+        return lightningArc_;
+    }
+
+    /// @brief Retrieve dynamic forcefield barrier presentation parameters.
+    /// @return Current ShieldFxState struct.
+    [[nodiscard]] constexpr const ShieldFxState& getShieldFx() const noexcept
+    {
+        return shieldFx_;
     }
 
     /// @brief Retrieve defensive perimeter bounding box for the shield barrier.
@@ -105,14 +120,23 @@ private:
     [[nodiscard]] static WorldPos computeMuzzle(const Hitbox& craftBox, FacingDirection facing) noexcept;
 
     [[nodiscard]] static std::int32_t findBestTarget(WorldPos muzzle, FacingDirection facing, TransformMode mode,
-        const TileMap& map, const std::array<TargetCandidate, kMaxTargets>& targets, std::size_t targetCount) noexcept;
+        const TileMap& map, const std::array<TargetCandidate, kMaxTargets>& targets, std::size_t targetCount,
+        bool hasLockedTarget, std::uint32_t lastLockedTargetId) noexcept;
+
+    void generateLightning(WorldPos muzzle, WorldPos target, bool locked, std::uint32_t targetId) noexcept;
 
     bool laserActive_ { false };
     bool shieldActive_ { false };
     BeamSegment beam_ { };
+    LightningArc lightningArc_ { };
+    ShieldFxState shieldFx_ { };
     DrainAccumulator laserDrain_ { };
     DrainAccumulator shieldDrain_ { };
     DrainAccumulator tileDamagePacer_ { };
+    std::uint32_t lastLockedTargetId_ { 0U };
+    bool hasLockedTarget_ { false };
+    std::uint32_t simTicks_ { 0U };
+    float timeAccumulator_ { 0.0f };
 };
 
 } // namespace ShooterCore

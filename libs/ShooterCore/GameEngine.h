@@ -11,6 +11,7 @@
 #include "EngineInput.h"
 #include "EntityPool.h"
 #include "Hitbox.h"
+#include "ParticlePool.h"
 #include "RenderCommandQueue.h"
 #include "TileMap.h"
 #include "TransformSystem.h"
@@ -148,6 +149,16 @@ public:
         return anim_;
     }
 
+    [[nodiscard]] const ParticlePool& getParticlePool() const noexcept
+    {
+        return particlePool_;
+    }
+
+    [[nodiscard]] ParticlePool& getParticlePool() noexcept
+    {
+        return particlePool_;
+    }
+
     /// @brief Spawn an enemy entity into the simulation.
     /// @param[in] type Entity classification category.
     /// @param[in] pos Continuous world coordinates.
@@ -169,6 +180,7 @@ private:
     TransformSystem transformSys_ { };
     WeaponSystem weaponSys_ { };
     AnimationController anim_ { };
+    ParticlePool particlePool_ { };
 
     RenderCommandQueue renderQueue_ { };
     AudioCommandQueue audioQueue_ { };

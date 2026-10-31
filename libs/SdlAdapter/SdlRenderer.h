@@ -53,6 +53,9 @@ private:
     void drawSprite(const ShooterCore::RenderCommand& cmd) noexcept;
     void drawBeam(const ShooterCore::RenderCommand& cmd) noexcept;
     void drawBar(const ShooterCore::RenderCommand& cmd) noexcept;
+    void drawLightning(const ShooterCore::RenderCommand& cmd) noexcept;
+    void drawShieldBubble(const ShooterCore::RenderCommand& cmd) noexcept;
+    void drawParticles(const ShooterCore::RenderCommand& cmd) noexcept;
 
     void drawRobotSprite(float x, float y, ShooterCore::FacingDirection facing, bool isAltWalk, bool isJump) noexcept;
     void drawJetSprite(float x, float y, ShooterCore::FacingDirection facing) noexcept;
@@ -63,6 +66,7 @@ private:
 
     SDL_Renderer* renderer_ { nullptr };
     SpriteAtlas atlas_ { };
+    const ShooterCore::RenderCommandQueue* activeQueue_ { nullptr };
 };
 
 } // namespace SdlAdapter

@@ -76,10 +76,12 @@ void SdlRenderer::renderFrame(const ShooterCore::RenderCommandQueue& queue) noex
 
     clearScreen();
 
+    activeQueue_ = &queue;
     const std::size_t cmdCount { queue.count() };
     for (std::size_t i { 0U }; i < cmdCount; ++i) {
         drawCommand(queue.get(i));
     }
+    activeQueue_ = nullptr;
 
     present();
 }
@@ -102,6 +104,15 @@ void SdlRenderer::drawCommand(const ShooterCore::RenderCommand& cmd) noexcept
         break;
     case ShooterCore::RenderCommandType::DrawBar:
         drawBar(cmd);
+        break;
+    case ShooterCore::RenderCommandType::DrawLightning:
+        drawLightning(cmd);
+        break;
+    case ShooterCore::RenderCommandType::DrawShield:
+        drawShieldBubble(cmd);
+        break;
+    case ShooterCore::RenderCommandType::DrawParticle:
+        drawParticles(cmd);
         break;
     case ShooterCore::RenderCommandType::None:
     default:
@@ -464,6 +475,163 @@ void SdlRenderer::drawBar(const ShooterCore::RenderCommand& cmd) noexcept
     // Border outline
     (void)SDL_SetRenderDrawColor(renderer_, 140U, 150U, 175U, 255U);
     (void)SDL_RenderDrawRect(renderer_, &outerRect);
+}
+
+void SdlRenderer::drawLightning(const ShooterCore::RenderCommand& cmd) noexcept
+{
+    const ShooterCore::LightningArc& arc { activeQueue_ ? activeQueue_->getLightning()
+                                                        : ShooterCore::LightningArc { } };
+    if (arc.nodeCount < 2U) {
+        return;
+    }
+
+    (void)SDL_SetRenderDrawBlendMode(renderer_, SDL_BLENDMODE_ADD);
+
+    // Pass 1: Outer glowing corona (additive, wide 5px)
+    const ShooterCore::ColorRgba& glow { cmd.glowColor };
+    (void)SDL_SetRenderDrawColor(renderer_, glow.r, glow.g, glow.b, glow.a);
+
+    for (std::size_t i { 0U }; i < (arc.nodeCount - 1U); ++i) {
+        const int x0 { toIntClamped(arc.nodes[i].x) };
+        const int y0 { toIntClamped(arc.nodes[i].y) };
+        const int x1 { toIntClamped(arc.nodes[i + 1U].x) };
+        const int y1 { toIntClamped(arc.nodes[i + 1U].y) };
+
+        (void)SDL_RenderDrawLine(renderer_, x0 - 2, y0, x1 - 2, y1);
+        (void)SDL_RenderDrawLine(renderer_, x0 + 2, y0, x1 + 2, y1);
+        (void)SDL_RenderDrawLine(renderer_, x0, y0 - 2, x1, y1 - 2);
+        (void)SDL_RenderDrawLine(renderer_, x0, y0 + 2, x1, y1 + 2);
+        (void)SDL_RenderDrawLine(renderer_, x0 - 1, y0 - 1, x1 - 1, y1 - 1);
+        (void)SDL_RenderDrawLine(renderer_, x0 + 1, y0 + 1, x1 + 1, y1 + 1);
+    }
+
+    // Pass 2: High-intensity plasma core (additive, 3px)
+    (void)SDL_SetRenderDrawColor(renderer_, 120U, 220U, 255U, 220U);
+    for (std::size_t i { 0U }; i < (arc.nodeCount - 1U); ++i) {
+        const int x0 { toIntClamped(arc.nodes[i].x) };
+        const int y0 { toIntClamped(arc.nodes[i].y) };
+        const int x1 { toIntClamped(arc.nodes[i + 1U].x) };
+        const int y1 { toIntClamped(arc.nodes[i + 1U].y) };
+
+        (void)SDL_RenderDrawLine(renderer_, x0 - 1, y0, x1 - 1, y1);
+        (void)SDL_RenderDrawLine(renderer_, x0 + 1, y0, x1 + 1, y1);
+        (void)SDL_RenderDrawLine(renderer_, x0, y0 - 1, x1, y1 - 1);
+        (void)SDL_RenderDrawLine(renderer_, x0, y0 + 1, x1, y1 + 1);
+    }
+
+    // Pass 3: Pure white central filament spine (1px)
+    (void)SDL_SetRenderDrawColor(renderer_, cmd.color.r, cmd.color.g, cmd.color.b, cmd.color.a);
+    for (std::size_t i { 0U }; i < (arc.nodeCount - 1U); ++i) {
+        const int x0 { toIntClamped(arc.nodes[i].x) };
+        const int y0 { toIntClamped(arc.nodes[i].y) };
+        const int x1 { toIntClamped(arc.nodes[i + 1U].x) };
+        const int y1 { toIntClamped(arc.nodes[i + 1U].y) };
+
+        (void)SDL_RenderDrawLine(renderer_, x0, y0, x1, y1);
+    }
+
+    // Pass 4: Impact reticle if locked to target
+    if (arc.lockedToTarget) {
+        const int tx { toIntClamped(arc.nodes[arc.nodeCount - 1U].x) };
+        const int ty { toIntClamped(arc.nodes[arc.nodeCount - 1U].y) };
+
+        (void)SDL_SetRenderDrawColor(renderer_, 255U, 240U, 90U, 255U);
+        (void)SDL_RenderDrawLine(renderer_, tx - 4, ty, tx + 4, ty);
+        (void)SDL_RenderDrawLine(renderer_, tx, ty - 4, tx, ty + 4);
+        (void)SDL_RenderDrawLine(renderer_, tx - 3, ty, tx, ty - 3);
+        (void)SDL_RenderDrawLine(renderer_, tx, ty - 3, tx + 3, ty);
+        (void)SDL_RenderDrawLine(renderer_, tx + 3, ty, tx, ty + 3);
+        (void)SDL_RenderDrawLine(renderer_, tx, ty + 3, tx - 3, ty);
+    }
+
+    (void)SDL_SetRenderDrawBlendMode(renderer_, SDL_BLENDMODE_NONE);
+}
+
+void SdlRenderer::drawShieldBubble(const ShooterCore::RenderCommand& cmd) noexcept
+{
+    const ShooterCore::ShieldFxState& shieldFx { activeQueue_ ? activeQueue_->getShieldFx()
+                                                              : ShooterCore::ShieldFxState { } };
+    const float cx { cmd.pos.x + (cmd.width * 0.5f) };
+    const float cy { cmd.pos.y + (cmd.height * 0.5f) };
+    const float baseRadius { (std::max(cmd.width, cmd.height) * 0.55f) + shieldFx.breathRadius };
+
+    (void)SDL_SetRenderDrawBlendMode(renderer_, SDL_BLENDMODE_BLEND);
+
+    constexpr std::size_t kSides { 12U };
+    constexpr float kStepAngle { 6.2831853f / static_cast<float>(kSides) };
+
+    int vx[kSides] { };
+    int vy[kSides] { };
+
+    for (std::size_t i { 0U }; i < kSides; ++i) {
+        const auto angle { static_cast<float>(i) * kStepAngle };
+        vx[i] = toIntClamped(cx + (baseRadius * std::cos(angle)));
+        vy[i] = toIntClamped(cy + (baseRadius * std::sin(angle)));
+    }
+
+    // Outer contour
+    if (shieldFx.isLowEnergy) {
+        (void)SDL_SetRenderDrawColor(renderer_, 255U, 60U, 40U, 220U);
+    } else {
+        (void)SDL_SetRenderDrawColor(renderer_, 40U, 190U, 255U, 200U);
+    }
+
+    for (std::size_t i { 0U }; i < kSides; ++i) {
+        const std::size_t next { (i + 1U) % kSides };
+        (void)SDL_RenderDrawLine(renderer_, vx[i], vy[i], vx[next], vy[next]);
+    }
+
+    // Internal translucent cross-facets
+    if (shieldFx.isLowEnergy) {
+        (void)SDL_SetRenderDrawColor(renderer_, 200U, 40U, 30U, 60U);
+    } else {
+        (void)SDL_SetRenderDrawColor(renderer_, 30U, 120U, 220U, 70U);
+    }
+
+    for (std::size_t i { 0U }; i < (kSides / 2U); ++i) {
+        const std::size_t opp { i + (kSides / 2U) };
+        (void)SDL_RenderDrawLine(renderer_, vx[i], vy[i], vx[opp], vy[opp]);
+    }
+
+    // Dynamic deflection ripple ring
+    if (shieldFx.hitIntensity > 0.05f) {
+        const auto rippleAlpha { static_cast<std::uint8_t>(255.0f * shieldFx.hitIntensity) };
+        (void)SDL_SetRenderDrawColor(renderer_, 255U, 255U, 255U, rippleAlpha);
+
+        const float rippleRad { baseRadius + (6.0f * (1.0f - shieldFx.hitIntensity)) };
+        for (std::size_t i { 0U }; i < kSides; ++i) {
+            const auto angle0 { static_cast<float>(i) * kStepAngle };
+            const auto angle1 { static_cast<float>((i + 1U) % kSides) * kStepAngle };
+
+            const int rx0 { toIntClamped(cx + (rippleRad * std::cos(angle0))) };
+            const int ry0 { toIntClamped(cy + (rippleRad * std::sin(angle0))) };
+            const int rx1 { toIntClamped(cx + (rippleRad * std::cos(angle1))) };
+            const int ry1 { toIntClamped(cy + (rippleRad * std::sin(angle1))) };
+
+            (void)SDL_RenderDrawLine(renderer_, rx0, ry0, rx1, ry1);
+        }
+    }
+
+    (void)SDL_SetRenderDrawBlendMode(renderer_, SDL_BLENDMODE_NONE);
+}
+
+void SdlRenderer::drawParticles(const ShooterCore::RenderCommand& cmd) noexcept
+{
+    const int px { toIntClamped(cmd.pos.x) };
+    const int py { toIntClamped(cmd.pos.y) };
+    const int size { std::max(1, toIntClamped(cmd.width)) };
+
+    (void)SDL_SetRenderDrawBlendMode(renderer_, SDL_BLENDMODE_BLEND);
+    (void)SDL_SetRenderDrawColor(renderer_, cmd.color.r, cmd.color.g, cmd.color.b, cmd.color.a);
+
+    if (size <= 1) {
+        (void)SDL_RenderDrawPoint(renderer_, px, py);
+    } else {
+        const SDL_Rect r { px, py, size, size };
+        (void)SDL_RenderFillRect(renderer_, &r);
+    }
+
+    (void)SDL_SetRenderDrawBlendMode(renderer_, SDL_BLENDMODE_NONE);
 }
 
 } // namespace SdlAdapter

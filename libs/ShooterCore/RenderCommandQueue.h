@@ -11,7 +11,16 @@
 namespace ShooterCore {
 
 /// @brief Tagged render command type discriminator.
-enum class RenderCommandType : std::uint8_t { None = 0U, DrawSprite = 1U, DrawTile = 2U, DrawBeam = 3U, DrawBar = 4U };
+enum class RenderCommandType : std::uint8_t {
+    None = 0U,
+    DrawSprite = 1U,
+    DrawTile = 2U,
+    DrawBeam = 3U,
+    DrawBar = 4U,
+    DrawLightning = 5U,
+    DrawShield = 6U,
+    DrawParticle = 7U
+};
 
 /// @struct RenderCommand
 /// @brief Hardware-independent drawing instruction emitted by GameEngine.
@@ -25,6 +34,7 @@ struct RenderCommand final {
     float height { 0.0f };
     float fillPct { 0.0f };
     ColorRgba color { };
+    ColorRgba glowColor { };
     FacingDirection facing { FacingDirection::Right };
     float rotationDegrees { 0.0f };
     std::uint8_t layer { 0U };
@@ -64,6 +74,22 @@ public:
     constexpr void clear() noexcept
     {
         count_ = 0U;
+        lightningArc_ = LightningArc { };
+        shieldFx_ = ShieldFxState { };
+    }
+
+    /// @brief Retrieve active multi-segment lightning arc parameters.
+    /// @return Const reference to active LightningArc struct.
+    [[nodiscard]] constexpr const LightningArc& getLightning() const noexcept
+    {
+        return lightningArc_;
+    }
+
+    /// @brief Retrieve active shield forcefield presentation state.
+    /// @return Const reference to active ShieldFxState struct.
+    [[nodiscard]] constexpr const ShieldFxState& getShieldFx() const noexcept
+    {
+        return shieldFx_;
     }
 
     /// @brief Retrieve command by index.
@@ -104,9 +130,35 @@ public:
     /// @return true if successfully pushed; false if queue is full.
     bool pushBar(WorldPos pos, float width, float height, float pct, ColorRgba color) noexcept;
 
+    /// @brief Push multi-segment lightning arc render command.
+    /// @param[in] arc Multi-node lightning arc.
+    /// @param[in] coreCol Intense inner core color.
+    /// @param[in] glowCol Additive halo glow color.
+    /// @param[in] layer Drawing layer.
+    /// @return true if successfully pushed; false if queue is full.
+    bool pushLightning(
+        const LightningArc& arc, ColorRgba coreCol, ColorRgba glowCol, std::uint8_t layer = 12U) noexcept;
+
+    /// @brief Push forcefield barrier plasma shield render command.
+    /// @param[in] box Craft hitbox for shield boundary calculation.
+    /// @param[in] fx Dynamic breathing and hit ripple parameters.
+    /// @param[in] layer Drawing layer.
+    /// @return true if successfully pushed; false if queue is full.
+    bool pushShield(const Hitbox& box, const ShieldFxState& fx, std::uint8_t layer = 11U) noexcept;
+
+    /// @brief Push visual particle render command.
+    /// @param[in] pos Continuous world position.
+    /// @param[in] color Particle color and opacity.
+    /// @param[in] size Diameter in pixels.
+    /// @param[in] layer Drawing layer.
+    /// @return true if successfully pushed; false if queue is full.
+    bool pushParticle(WorldPos pos, ColorRgba color, float size, std::uint8_t layer = 13U) noexcept;
+
 private:
     std::array<RenderCommand, kCapacity> commands_ { };
     std::size_t count_ { 0U };
+    LightningArc lightningArc_ { };
+    ShieldFxState shieldFx_ { };
 };
 
 } // namespace ShooterCore

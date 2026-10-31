@@ -85,7 +85,30 @@ void runSdlRendererTests() noexcept
         (void)queue.pushBar(ShooterCore::WorldPos { 10.0f, 10.0f }, 100.0f, 8.0f, 0.75f,
             ShooterCore::ColorRgba { 50U, 220U, 60U, 255U });
 
-        TEST_ASSERT_TRUE(queue.count() > 10U, "Queue should contain populated commands");
+        // Phase 10: Lightning arc, shield bubble, and particle commands
+        ShooterCore::LightningArc arc { };
+        arc.nodeCount = 4U;
+        arc.nodes[0U] = ShooterCore::WorldPos { 50.0f, 50.0f };
+        arc.nodes[1U] = ShooterCore::WorldPos { 80.0f, 45.0f };
+        arc.nodes[2U] = ShooterCore::WorldPos { 120.0f, 55.0f };
+        arc.nodes[3U] = ShooterCore::WorldPos { 160.0f, 50.0f };
+        arc.active = true;
+        arc.lockedToTarget = true;
+        (void)queue.pushLightning(arc, ShooterCore::ColorRgba { 255U, 255U, 255U, 255U },
+            ShooterCore::ColorRgba { 0U, 180U, 255U, 160U }, 12U);
+
+        ShooterCore::ShieldFxState shieldFx { };
+        shieldFx.breathRadius = 1.2f;
+        shieldFx.hitIntensity = 0.8f;
+        shieldFx.isLowEnergy = false;
+        (void)queue.pushShield(
+            ShooterCore::Hitbox { ShooterCore::WorldPos { 40.0f, 40.0f }, ShooterCore::WorldPos { 60.0f, 60.0f } },
+            shieldFx, 11U);
+
+        (void)queue.pushParticle(
+            ShooterCore::WorldPos { 160.0f, 50.0f }, ShooterCore::ColorRgba { 255U, 240U, 80U, 255U }, 2.0f, 13U);
+
+        TEST_ASSERT_TRUE(queue.count() > 13U, "Queue should contain populated commands");
 
         // Render entire frame without throwing or crashing
         renderer.renderFrame(queue);

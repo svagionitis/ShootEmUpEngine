@@ -163,18 +163,21 @@ static void testModeTargetingConstraints() noexcept
 
     const DeltaTime dt { 1.0f / 60.0f };
 
-    // In Robot mode (cone threshold cos = 0.2588 / 75 deg), target is inside cone
+    // In Robot mode (360-degree omni-directional), target is acquired
     weapons.updateWeapons(
         dt, true, false, false, TransformMode::Robot, FacingDirection::Right, craftBox, map, targets, 1U, energy);
 
     TEST_ASSERT(weapons.getBeamSegment().lockedToTarget, "Robot wide cone must acquire steep-angled target");
     TEST_ASSERT(weapons.getBeamSegment().targetId == 7U, "Robot must lock candidate 7");
 
-    // In Jet mode (cone threshold cos = 0.7071 / 45 deg), target is outside cone
+    // In Jet mode (cone threshold cos = 0.50 / 60 deg), target outside cone is rejected
+    // Place target at ~70 degrees: X=60, Y=50 (muzzle at X=48, Y=96 -> dx=12, dy=-46, cos~0.25)
+    targets[0].bounds = Hitbox { WorldPos { 54.0f, 42.0f }, WorldPos { 66.0f, 58.0f } };
+
     weapons.updateWeapons(
         dt, true, false, false, TransformMode::Jet, FacingDirection::Right, craftBox, map, targets, 1U, energy);
 
-    TEST_ASSERT(!weapons.getBeamSegment().lockedToTarget, "Jet narrow cone must reject steep-angled target");
+    TEST_ASSERT(!weapons.getBeamSegment().lockedToTarget, "Jet cone must reject steep-angled target");
 
     // Transformation lockout: if isTransforming == true, weapons are locked
     weapons.updateWeapons(
@@ -216,6 +219,104 @@ static void testDestructibleTileErosion() noexcept
     TEST_ASSERT(map.getHealth(blockCoord).isDestroyed(), "Destructible block must be destroyed by continuous fire");
 }
 
+static void testOmniDirectionalTargeting() noexcept
+{
+    TileMap map { 20U, 20U, 16.0f };
+    WeaponSystem weapons { };
+    EnergyPoints energy { 100U };
+    const Hitbox craftBox { WorldPos { 96.0f, 96.0f }, WorldPos { 112.0f, 128.0f } };
+
+    // Target placed directly BEHIND the player craft (player facing Right, target at Left: X=32, Y=112)
+    std::array<TargetCandidate, WeaponSystem::kMaxTargets> targets { };
+    targets[0].id = 42U;
+    targets[0].bounds = Hitbox { WorldPos { 24.0f, 104.0f }, WorldPos { 40.0f, 120.0f } };
+    targets[0].type = TargetType::Hostile;
+    targets[0].active = true;
+
+    const DeltaTime dt { 1.0f / 60.0f };
+
+    // In Robot mode: 360-degree omni-directional targeting acquires target behind craft
+    weapons.updateWeapons(
+        dt, true, false, false, TransformMode::Robot, FacingDirection::Right, craftBox, map, targets, 1U, energy);
+
+    TEST_ASSERT(weapons.isLaserActive(), "Laser must fire");
+    TEST_ASSERT(weapons.getBeamSegment().lockedToTarget, "Robot mode must lock target directly behind craft (360-deg)");
+    TEST_ASSERT(weapons.getBeamSegment().targetId == 42U, "Locked target must match target ID 42");
+
+    // In Jet mode: target behind craft is rejected
+    weapons.updateWeapons(
+        dt, true, false, false, TransformMode::Jet, FacingDirection::Right, craftBox, map, targets, 1U, energy);
+
+    TEST_ASSERT(!weapons.getBeamSegment().lockedToTarget, "Jet mode must reject target behind craft");
+}
+
+static void testTargetLockHysteresis() noexcept
+{
+    TileMap map { 20U, 20U, 16.0f };
+    WeaponSystem weapons { };
+    EnergyPoints energy { 100U };
+    const Hitbox craftBox { WorldPos { 96.0f, 96.0f }, WorldPos { 112.0f, 128.0f } };
+
+    // Two candidates at similar distances: candidate 1 at X=160, Y=112 (dist=48), candidate 2 at X=162, Y=112 (dist=50)
+    std::array<TargetCandidate, WeaponSystem::kMaxTargets> targets { };
+    targets[0].id = 101U;
+    targets[0].bounds = Hitbox { WorldPos { 152.0f, 104.0f }, WorldPos { 168.0f, 120.0f } };
+    targets[0].type = TargetType::Hostile;
+    targets[0].active = true;
+
+    targets[1].id = 102U;
+    targets[1].bounds = Hitbox { WorldPos { 156.0f, 104.0f }, WorldPos { 172.0f, 120.0f } };
+    targets[1].type = TargetType::Hostile;
+    targets[1].active = true;
+
+    const DeltaTime dt { 1.0f / 60.0f };
+
+    // Frame 1: locks candidate 1 (closer)
+    weapons.updateWeapons(
+        dt, true, false, false, TransformMode::Robot, FacingDirection::Right, craftBox, map, targets, 2U, energy);
+
+    TEST_ASSERT(weapons.getBeamSegment().targetId == 101U, "Initial lock must acquire candidate 101");
+
+    // Frame 2: candidate 2 moves slightly closer than candidate 1 (e.g. dist 46 vs 48)
+    targets[1].bounds = Hitbox { WorldPos { 150.0f, 104.0f }, WorldPos { 166.0f, 120.0f } };
+
+    weapons.updateWeapons(
+        dt, true, false, false, TransformMode::Robot, FacingDirection::Right, craftBox, map, targets, 2U, energy);
+
+    // Hysteresis stickiness bonus (+0.25) must retain lock on candidate 101
+    TEST_ASSERT(weapons.getBeamSegment().targetId == 101U, "Hysteresis bonus must retain lock on candidate 101");
+}
+
+static void testLightningArcGeneration() noexcept
+{
+    TileMap map { 20U, 20U, 16.0f };
+    WeaponSystem weapons { };
+    EnergyPoints energy { 100U };
+    const Hitbox craftBox { WorldPos { 32.0f, 32.0f }, WorldPos { 48.0f, 64.0f } };
+
+    std::array<TargetCandidate, WeaponSystem::kMaxTargets> targets { };
+    targets[0].id = 5U;
+    targets[0].bounds = Hitbox { WorldPos { 128.0f, 40.0f }, WorldPos { 144.0f, 56.0f } };
+    targets[0].type = TargetType::Hostile;
+    targets[0].active = true;
+
+    const DeltaTime dt { 1.0f / 60.0f };
+
+    weapons.updateWeapons(
+        dt, true, false, false, TransformMode::Robot, FacingDirection::Right, craftBox, map, targets, 1U, energy);
+
+    const LightningArc& arc { weapons.getLightningArc() };
+    TEST_ASSERT(arc.active, "Lightning arc must be active when firing");
+    TEST_ASSERT(arc.lockedToTarget, "Lightning arc must be locked to target");
+    TEST_ASSERT(arc.targetId == 5U, "Lightning arc targetId must match 5");
+    TEST_ASSERT(arc.nodeCount >= 4U && arc.nodeCount <= kMaxLightningNodes, "Node count must be valid");
+
+    // First node must match muzzle, last node must match target center
+    TEST_ASSERT(arc.nodes[0U].x >= 47.9f && arc.nodes[0U].x <= 48.1f, "First node must be at muzzle X");
+    TEST_ASSERT(arc.nodes[arc.nodeCount - 1U].x >= 135.9f && arc.nodes[arc.nodeCount - 1U].x <= 136.1f,
+        "Last node must be at target center X");
+}
+
 void runWeaponTests() noexcept
 {
     testDrainAccumulator();
@@ -224,6 +325,9 @@ void runWeaponTests() noexcept
     testTargetPrioritization();
     testModeTargetingConstraints();
     testDestructibleTileErosion();
+    testOmniDirectionalTargeting();
+    testTargetLockHysteresis();
+    testLightningArcGeneration();
 }
 
 } // namespace ShooterCore::Test

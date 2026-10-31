@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include <algorithm>
+#include <array>
 
 namespace ShooterCore {
 
@@ -546,6 +547,45 @@ struct CameraViewport final {
     WorldPos pos { 0.0f, 0.0f };
     float width { 320.0f };
     float height { 240.0f };
+};
+
+inline constexpr std::size_t kMaxLightningNodes { 12U };
+inline constexpr std::size_t kMaxParticles { 128U };
+
+/// @struct LightningArc
+/// @brief Multi-segment jittered trajectory of an electrical laser discharge.
+struct LightningArc final {
+    std::array<WorldPos, kMaxLightningNodes> nodes { };
+    std::size_t nodeCount { 0U };
+    bool active { false };
+    bool lockedToTarget { false };
+    std::uint32_t targetId { 0U };
+};
+
+/// @enum class ParticleType
+/// @brief Category of combat particle debris.
+enum class ParticleType : std::uint8_t { None = 0U, ImpactSpark = 1U, WallDebris = 2U, ShieldRipple = 3U };
+
+/// @struct Particle
+/// @brief Discrete visual particle entity.
+struct Particle final {
+    WorldPos pos { 0.0f, 0.0f };
+    Velocity vel { 0.0f, 0.0f };
+    ColorRgba color { 255U, 255U, 255U, 255U };
+    float lifetime { 0.0f };
+    float maxLifetime { 0.0f };
+    float size { 1.0f };
+    ParticleType type { ParticleType::None };
+    bool active { false };
+};
+
+/// @struct ShieldFxState
+/// @brief State describing force barrier breathing and impact transients.
+struct ShieldFxState final {
+    float breathRadius { 0.0f };
+    float hitAngleRad { 0.0f };
+    float hitIntensity { 0.0f };
+    bool isLowEnergy { false };
 };
 
 } // namespace ShooterCore

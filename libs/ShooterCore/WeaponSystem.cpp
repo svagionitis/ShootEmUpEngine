@@ -33,7 +33,8 @@ WorldPos WeaponSystem::computeMuzzle(const Hitbox& craftBox, FacingDirection fac
 }
 
 std::int32_t WeaponSystem::findBestTarget(WorldPos muzzle, FacingDirection facing, TransformMode mode,
-    const TileMap& map, const std::array<TargetCandidate, kMaxTargets>& targets, std::size_t targetCount) noexcept
+    const TileMap& map, const std::array<TargetCandidate, kMaxTargets>& targets, std::size_t targetCount,
+    bool hasLockedTarget, std::uint32_t lastLockedTargetId) noexcept
 {
     if (targetCount == 0U) {
         return -1;
@@ -105,10 +106,12 @@ std::int32_t WeaponSystem::findBestTarget(WorldPos muzzle, FacingDirection facin
             }
         }
 
-        const float distScore { 0.50f * (1.0f - (dist / maxRange)) };
-        const float angleScore { 0.30f * std::max(0.0f, cosAngle) };
+        const float distScore { (mode == TransformMode::Jet ? 0.40f : 0.55f) * (1.0f - (dist / maxRange)) };
+        const float angleScore { (mode == TransformMode::Jet ? 0.35f : 0.10f) * std::max(0.0f, cosAngle) };
         const float threatScore { (targets[i].type == TargetType::Hostile) ? 0.20f : 0.0f };
-        const float totalScore { distScore + angleScore + threatScore };
+        const float stickyScore { (hasLockedTarget && targets[i].id == lastLockedTargetId) ? kTargetStickinessBonus
+                                                                                           : 0.0f };
+        const float totalScore { distScore + angleScore + threatScore + stickyScore };
 
         if (totalScore > bestScore) {
             bestScore = totalScore;
@@ -119,10 +122,53 @@ std::int32_t WeaponSystem::findBestTarget(WorldPos muzzle, FacingDirection facin
     return bestIdx;
 }
 
+void WeaponSystem::generateLightning(WorldPos muzzle, WorldPos target, bool locked, std::uint32_t targetId) noexcept
+{
+    lightningArc_.active = true;
+    lightningArc_.lockedToTarget = locked;
+    lightningArc_.targetId = targetId;
+
+    const float dx { target.x - muzzle.x };
+    const float dy { target.y - muzzle.y };
+    const float dist { std::sqrt((dx * dx) + (dy * dy)) };
+
+    if (dist <= 1.0f) {
+        lightningArc_.nodeCount = 2U;
+        lightningArc_.nodes[0U] = muzzle;
+        lightningArc_.nodes[1U] = target;
+        return;
+    }
+
+    const std::size_t nodeCount { dist > 64.0f ? 8U : 5U };
+    lightningArc_.nodeCount = nodeCount;
+    lightningArc_.nodes[0U] = muzzle;
+    lightningArc_.nodes[nodeCount - 1U] = target;
+
+    const float uPerpX { -dy / dist };
+    const float uPerpY { dx / dist };
+    constexpr float kMaxAmp { 6.5f };
+
+    for (std::size_t k { 1U }; k < (nodeCount - 1U); ++k) {
+        const auto kFrac { static_cast<float>(k) / static_cast<float>(nodeCount - 1U) };
+        const WorldPos base { muzzle.x + (dx * kFrac), muzzle.y + (dy * kFrac) };
+
+        const float envelope { std::sin(kFrac * 3.14159265f) };
+        std::uint32_t h { (simTicks_ * 1664525U) + (static_cast<std::uint32_t>(k) * 1013904223U) };
+        h ^= (h >> 16U);
+        const auto randNorm { (static_cast<float>(h & 0xFFFFU) / 32768.0f) - 1.0f };
+
+        const float disp { envelope * kMaxAmp * randNorm };
+        lightningArc_.nodes[k] = WorldPos { base.x + (uPerpX * disp), base.y + (uPerpY * disp) };
+    }
+}
+
 void WeaponSystem::updateWeapons(DeltaTime dt, bool fireIntent, bool shieldIntent, bool isTransforming,
     TransformMode mode, FacingDirection facing, const Hitbox& craftBox, TileMap& map,
     const std::array<TargetCandidate, kMaxTargets>& targets, std::size_t targetCount, EnergyPoints& energy) noexcept
 {
+    ++simTicks_;
+    timeAccumulator_ += dt.seconds();
+
     const bool canOperate { !isTransforming && !energy.isDepleted() };
     const bool shouldFire { fireIntent && canOperate };
     const bool shouldShield { shieldIntent && canOperate };
@@ -162,15 +208,21 @@ void WeaponSystem::updateWeapons(DeltaTime dt, bool fireIntent, bool shieldInten
 
         const float maxRange { (mode == TransformMode::Jet) ? kLaserRangeJet : kLaserRangeRobot };
         const WorldPos muzzle { computeMuzzle(craftBox, effectiveFacing) };
-        const std::int32_t bestIdx { findBestTarget(muzzle, effectiveFacing, mode, map, targets, targetCount) };
+        const std::int32_t bestIdx { findBestTarget(
+            muzzle, effectiveFacing, mode, map, targets, targetCount, hasLockedTarget_, lastLockedTargetId_) };
 
         if (bestIdx >= 0) {
             const auto targetIndex { static_cast<std::size_t>(bestIdx) };
+            hasLockedTarget_ = true;
+            lastLockedTargetId_ = targets[targetIndex].id;
+
             beam_.active = true;
             beam_.lockedToTarget = true;
             beam_.targetId = targets[targetIndex].id;
             beam_.origin = muzzle;
             beam_.endpoint = targets[targetIndex].center();
+
+            generateLightning(beam_.origin, beam_.endpoint, true, beam_.targetId);
 
             if (targets[targetIndex].type == TargetType::Destructible) {
                 tileDamagePacer_.accumulate(kTileDamageRate, dt.seconds());
@@ -182,6 +234,9 @@ void WeaponSystem::updateWeapons(DeltaTime dt, bool fireIntent, bool shieldInten
                 tileDamagePacer_.reset();
             }
         } else {
+            hasLockedTarget_ = false;
+            lastLockedTargetId_ = 0U;
+
             const WorldPos projectedEnd { muzzle.x + (fx * maxRange), muzzle.y + (fy * maxRange) };
             WorldPos wallHit { };
             const bool hitSolid { CollisionSolver::raycast(muzzle, projectedEnd, map, wallHit) };
@@ -193,6 +248,8 @@ void WeaponSystem::updateWeapons(DeltaTime dt, bool fireIntent, bool shieldInten
 
             if (hitSolid) {
                 beam_.endpoint = wallHit;
+                generateLightning(beam_.origin, beam_.endpoint, false, 0U);
+
                 const TileCoord coord { wallHit.toTileCoord(map.tileSize()) };
                 if (map.isDestructible(coord)) {
                     tileDamagePacer_.accumulate(kTileDamageRate, dt.seconds());
@@ -204,6 +261,7 @@ void WeaponSystem::updateWeapons(DeltaTime dt, bool fireIntent, bool shieldInten
                 }
             } else {
                 beam_.endpoint = projectedEnd;
+                generateLightning(beam_.origin, beam_.endpoint, false, 0U);
                 tileDamagePacer_.reset();
             }
         }
@@ -212,14 +270,25 @@ void WeaponSystem::updateWeapons(DeltaTime dt, bool fireIntent, bool shieldInten
         beam_.active = false;
         beam_.lockedToTarget = false;
         beam_.targetId = 0U;
+        lightningArc_.active = false;
+        hasLockedTarget_ = false;
+        lastLockedTargetId_ = 0U;
         tileDamagePacer_.reset();
     }
 
     if (shouldShield) {
         shieldActive_ = true;
         shieldDrain_.accumulate(kShieldDrainRate, dt.seconds());
+
+        constexpr float kTwoPi { 6.2831853f };
+        shieldFx_.breathRadius = 1.5f * std::sin(kTwoPi * 3.0f * timeAccumulator_);
+        if (shieldFx_.hitIntensity > 0.0f) {
+            shieldFx_.hitIntensity = std::max(0.0f, shieldFx_.hitIntensity - (4.0f * dt.seconds()));
+        }
+        shieldFx_.isLowEnergy = (energy.value() < 20U);
     } else {
         shieldActive_ = false;
+        shieldFx_.hitIntensity = 0.0f;
     }
 
     const std::uint16_t laserDeduction { laserDrain_.consumeWhole() };
@@ -236,6 +305,9 @@ void WeaponSystem::updateWeapons(DeltaTime dt, bool fireIntent, bool shieldInten
         beam_.active = false;
         beam_.lockedToTarget = false;
         beam_.targetId = 0U;
+        lightningArc_.active = false;
+        hasLockedTarget_ = false;
+        lastLockedTargetId_ = 0U;
     }
 }
 
@@ -247,6 +319,8 @@ bool WeaponSystem::absorbImpact(DamageValue damage, EnergyPoints& energy) noexce
 
     const std::uint16_t cost { damage.value() };
     energy.deduct(EnergyPoints { cost });
+
+    shieldFx_.hitIntensity = 1.0f;
 
     LOG(INFO) << "WeaponSystem: Energy barrier absorbed " << cost << " damage points.";
 
@@ -263,6 +337,12 @@ void WeaponSystem::reset() noexcept
     laserActive_ = false;
     shieldActive_ = false;
     beam_ = BeamSegment { };
+    lightningArc_ = LightningArc { };
+    shieldFx_ = ShieldFxState { };
+    hasLockedTarget_ = false;
+    lastLockedTargetId_ = 0U;
+    simTicks_ = 0U;
+    timeAccumulator_ = 0.0f;
     laserDrain_.reset();
     shieldDrain_.reset();
     tileDamagePacer_.reset();

@@ -105,6 +105,7 @@ void runShieldTests() noexcept;
 void runEngineInputTests() noexcept;
 void runCommandQueueTests() noexcept;
 void runEntityPoolTests() noexcept;
+void runParticlePoolTests() noexcept;
 void runGameEngineTests() noexcept;
 void runAnimationTests() noexcept;
 void runDeterminismSoakTests() noexcept;

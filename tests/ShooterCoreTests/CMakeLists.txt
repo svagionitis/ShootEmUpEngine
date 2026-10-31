@@ -8,6 +8,7 @@ add_executable(ShooterCoreTests
     TestEntityPool.cpp
     TestGameEngine.cpp
     TestHitbox.cpp
+    TestParticlePool.cpp
     TestShieldSystem.cpp
     TestTileMap.cpp
     TestTransformSystem.cpp
@@ -50,6 +51,7 @@ register_shooter_test(ShooterCore_ShieldSystem     ShieldSystem     "combat;shie
 register_shooter_test(ShooterCore_EngineInput      EngineInput      "unit;input"         5)
 register_shooter_test(ShooterCore_CommandQueues    CommandQueues    "queues;memory"      5)
 register_shooter_test(ShooterCore_EntityPool       EntityPool       "memory;lifecycle"   10)
+register_shooter_test(ShooterCore_ParticlePool     ParticlePool     "combat;particles"   5)
 register_shooter_test(ShooterCore_GameEngine       GameEngine       "integration;engine" 15)
 register_shooter_test(ShooterCore_Animation        Animation        "unit;animation"     5)
 register_shooter_test(ShooterCore_DeterminismSoak  DeterminismSoak  "soak;determinism"   60)

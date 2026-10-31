@@ -8,6 +8,8 @@ add_library(ShooterCore STATIC
     Hitbox.cpp
     Logger.cpp
     Logger.h
+    ParticlePool.cpp
+    ParticlePool.h
     RenderCommandQueue.cpp
     TileMap.cpp
     TransformSystem.cpp

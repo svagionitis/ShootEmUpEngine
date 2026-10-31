@@ -12,6 +12,7 @@
 #include "AnimationController.h"
 #include "CollisionSolver.h"
 #include "Hitbox.h"
+#include "ParticlePool.h"
 #include "TileMap.h"
 #include "TransformSystem.h"
 #include "Types.h"
@@ -41,6 +42,7 @@ void GameEngine::initLevel(const TileMap& map, WorldPos playerSpawn) noexcept
 
     map_ = map;
     entities_.clear();
+    particlePool_.clear();
     renderQueue_.clear();
     audioQueue_.clear();
 
@@ -78,6 +80,7 @@ void GameEngine::step(DeltaTime dt, EngineInput input) noexcept
     }
 
     anim_.update(dt);
+    particlePool_.update(dt);
     updateInput(dt, input);
     updatePhysics(dt, input);
     updateWeapons(dt, input);
@@ -238,24 +241,35 @@ void GameEngine::updateWeapons(DeltaTime dt, EngineInput input) noexcept
         audioQueue_.pushSound(SoundEffectId::ShieldDeploy, 0.4f);
     }
 
-    // 5. Apply laser damage to locked entity
+    // 5. Apply laser damage to locked entity & emit visual FX
     const BeamSegment beam { weaponSys_.getBeamSegment() };
-    if (beam.active && beam.lockedToTarget && beam.targetId < 1000U) {
-        const std::size_t slotIdx { static_cast<std::size_t>(beam.targetId) };
-        if (slotIdx < entities_.capacity()) {
-            EntitySlot& slt { entities_.slot(slotIdx) };
-            if (slt.active) {
-                if (slt.data.health > 1U) {
-                    --slt.data.health;
-                } else {
-                    slt.data.health = 0U;
-                    const EntityId eid { static_cast<std::uint16_t>(slotIdx), slt.generation };
-                    entities_.despawn(eid);
-                    LOG(INFO) << "GameEngine: Enemy ID " << eid.index() << " destroyed. Energy replenished (+5).";
-                    energy_.replenish(EnergyPoints { 5U });
-                    audioQueue_.pushSound(SoundEffectId::EnemyExplode);
+    if (beam.active) {
+        if (beam.lockedToTarget && beam.targetId < 1000U) {
+            const std::size_t slotIdx { static_cast<std::size_t>(beam.targetId) };
+            if (slotIdx < entities_.capacity()) {
+                EntitySlot& slt { entities_.slot(slotIdx) };
+                if (slt.active) {
+                    particlePool_.emitSparks(beam.endpoint, 0.0f, 3U);
+                    if (slt.data.health > 1U) {
+                        --slt.data.health;
+                    } else {
+                        slt.data.health = 0U;
+                        const EntityId eid { static_cast<std::uint16_t>(slotIdx), slt.generation };
+                        entities_.despawn(eid);
+                        LOG(INFO) << "GameEngine: Enemy ID " << eid.index() << " destroyed. Energy replenished (+5).";
+                        energy_.replenish(EnergyPoints { 5U });
+                        audioQueue_.pushSound(SoundEffectId::EnemyExplode);
+                        particlePool_.emitDebris(beam.endpoint, 8U);
+                        particlePool_.emitSparks(beam.endpoint, 0.0f, 6U);
+                    }
                 }
             }
+        } else if (beam.lockedToTarget && beam.targetId >= 1000U) {
+            particlePool_.emitDebris(beam.endpoint, 2U);
+            particlePool_.emitSparks(beam.endpoint, 0.0f, 2U);
+        } else {
+            // Unlocked beam striking surface
+            particlePool_.emitSparks(beam.endpoint, 0.0f, 1U);
         }
     }
 }
@@ -292,9 +306,11 @@ void GameEngine::updateEntities(DeltaTime dt) noexcept
             const bool absorbed { weaponSys_.absorbImpact(dmg, energy_) };
             if (absorbed) {
                 audioQueue_.pushSound(SoundEffectId::ShieldDeflect);
+                particlePool_.emitShieldSparks(ent.pos, 0.0f, 8U);
             } else {
                 energy_.deduct(EnergyPoints { dmg.value() });
                 audioQueue_.pushSound(SoundEffectId::PlayerDamage);
+                particlePool_.emitSparks(playerPos_, 0.0f, 6U);
                 if (energy_.isDepleted()) {
                     isAlive_ = false;
                 }
@@ -371,20 +387,33 @@ void GameEngine::emitCommands() noexcept
     }
     renderQueue_.pushSprite(playerSpr, playerPos_, playerFacing_, 10U);
 
-    // 4. Laser beam
+    // 4. Laser beam & lightning arc
     if (weaponSys_.isLaserActive()) {
+        const LightningArc& arc { weaponSys_.getLightningArc() };
+        renderQueue_.pushLightning(arc, ColorRgba { 255U, 255U, 255U, 255U }, ColorRgba { 0U, 180U, 255U, 160U }, 12U);
+
         const BeamSegment beam { weaponSys_.getBeamSegment() };
-        renderQueue_.pushBeam(beam.origin, beam.endpoint, ColorRgba { 255U, 64U, 64U, 255U });
+        renderQueue_.pushBeam(beam.origin, beam.endpoint, ColorRgba { 0U, 220U, 255U, 255U });
     }
 
     // 5. Shield barrier
     if (weaponSys_.isShieldActive()) {
         const Hitbox shieldBox { WeaponSystem::computeShield(playerBox_) };
+        const ShieldFxState& fx { weaponSys_.getShieldFx() };
+        renderQueue_.pushShield(shieldBox, fx, 11U);
         renderQueue_.pushBar(
             shieldBox.min(), shieldBox.width(), shieldBox.height(), 1.0f, ColorRgba { 0U, 180U, 255U, 128U });
     }
 
-    // 6. HUD energy bar
+    // 6. Visual FX particles
+    const auto& particles { particlePool_.particles() };
+    for (std::size_t i { 0U }; i < ParticlePool::kCapacity; ++i) {
+        if (particles[i].active) {
+            renderQueue_.pushParticle(particles[i].pos, particles[i].color, particles[i].size, 13U);
+        }
+    }
+
+    // 7. HUD energy bar
     const float energyPct { static_cast<float>(energy_.value()) / static_cast<float>(EnergyPoints::kDefaultMax) };
     renderQueue_.pushBar(WorldPos { 8.0f, 8.0f }, 100.0f, 6.0f, energyPct, ColorRgba { 0U, 220U, 255U, 255U });
 }
