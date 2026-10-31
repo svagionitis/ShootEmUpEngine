@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "RenderCommandQueue.h"
+#include "SpriteAtlas.h"
 #include "Types.h"
 
 struct SDL_Renderer;
@@ -21,13 +22,17 @@ public:
     SdlRenderer(SdlRenderer&&) noexcept = default;
     SdlRenderer& operator=(SdlRenderer&&) noexcept = default;
 
-    /// @brief Attach hardware SDL renderer.
+    /// @brief Attach hardware SDL renderer and initialize sprite atlas.
     /// @param[in] renderer Valid hardware renderer pointer.
     void attachRenderer(SDL_Renderer* renderer) noexcept;
 
     /// @brief Retrieve attached hardware SDL renderer.
     /// @return Pointer to attached renderer or nullptr.
     [[nodiscard]] SDL_Renderer* getRenderer() const noexcept;
+
+    /// @brief Retrieve underlying sprite atlas.
+    /// @return Reference to sprite atlas.
+    [[nodiscard]] const SpriteAtlas& getAtlas() const noexcept;
 
     /// @brief Consume and rasterize all commands in the command queue.
     /// @param[in] queue Frame render commands emitted by the engine core.
@@ -57,6 +62,7 @@ private:
     void drawExplosion(float x, float y, float size) noexcept;
 
     SDL_Renderer* renderer_ { nullptr };
+    SpriteAtlas atlas_ { };
 };
 
 } // namespace SdlAdapter

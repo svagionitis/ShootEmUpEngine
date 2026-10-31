@@ -365,19 +365,79 @@ private:
     float accumulator_ { 0.0f };
 };
 
+/// @class RotationAngle
+/// @brief Strongly-typed angle in degrees for directional sprite rendering.
+class RotationAngle final {
+public:
+    constexpr RotationAngle() noexcept = default;
+
+    /// @brief Construct rotation angle in degrees.
+    /// @param[in] deg Angle in degrees.
+    explicit constexpr RotationAngle(float deg) noexcept
+        : degrees_ { deg }
+    {
+    }
+
+    /// @brief Retrieve raw degrees value.
+    /// @return Angle in degrees.
+    [[nodiscard]] constexpr float degrees() const noexcept
+    {
+        return degrees_;
+    }
+
+    /// @brief Equality comparison.
+    [[nodiscard]] constexpr bool operator==(const RotationAngle& o) const noexcept
+    {
+        return degrees_ == o.degrees_;
+    }
+
+    /// @brief Inequality comparison.
+    [[nodiscard]] constexpr bool operator!=(const RotationAngle& o) const noexcept
+    {
+        return !(*this == o);
+    }
+
+private:
+    float degrees_ { 0.0f };
+};
+
 /// @brief Visual sprite identifier for presentation rendering.
 enum class SpriteId : std::uint16_t {
     None = 0U,
-    PlayerRobotWalk1 = 1U,
-    PlayerRobotWalk2 = 2U,
-    PlayerRobotJump = 3U,
-    PlayerJet = 4U,
-    PlayerTransforming = 5U,
-    EnemyPatrol = 10U,
-    EnemyFlyer = 11U,
-    EnemyBoss = 12U,
-    SparkParticle = 20U,
-    Explosion = 21U
+    PlayerRobotIdle = 1U,
+    PlayerRobotWalk1 = 2U,
+    PlayerRobotWalk2 = 3U,
+    PlayerRobotWalk3 = 4U,
+    PlayerRobotJump = 5U,
+    PlayerRobotCrouch = 6U,
+    PlayerJet = 7U,
+    PlayerJetExhaust1 = 8U,
+    PlayerJetExhaust2 = 9U,
+    PlayerMorph1 = 10U,
+    PlayerMorph2 = 11U,
+    PlayerMorph3 = 12U,
+    PlayerTransforming = 13U,
+    EnemyPatrol = 20U,
+    EnemyBuzzer1 = 21U,
+    EnemyBuzzer2 = 22U,
+    EnemyCrawler1 = 23U,
+    EnemyCrawler2 = 24U,
+    EnemyFlyer = 25U,
+    EnemyManta1 = 26U,
+    EnemyManta2 = 27U,
+    EnemyBoss = 28U,
+    NestCoreActive = 30U,
+    NestCoreDestroyed = 31U,
+    SparkParticle = 40U,
+    Explosion = 41U,
+    ExplosionPhase1 = 42U,
+    ExplosionPhase2 = 43U,
+    ExplosionPhase3 = 44U,
+    ExplosionPhase4 = 45U,
+    TileMetalWall = 50U,
+    TileCircuitWall = 51U,
+    TileDestructibleWall = 52U,
+    TileHazardLava = 53U
 };
 
 /// @brief Sound effect identifier for presentation audio playback.

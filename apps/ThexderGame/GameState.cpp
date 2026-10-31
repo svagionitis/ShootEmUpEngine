@@ -207,7 +207,8 @@ void GameState::buildRenderQueue(ShooterCore::RenderCommandQueue& outQueue) noex
             const float sx { cmd.pos.x - camera_.pos.x };
             const float sy { cmd.pos.y - camera_.pos.y };
             if (sx >= -48.0f && sx <= kViewWidth + 32.0f && sy >= -48.0f && sy <= kViewHeight + 32.0f) {
-                (void)outQueue.pushSprite(cmd.sprite, ShooterCore::WorldPos { sx, sy }, cmd.facing, cmd.layer);
+                (void)outQueue.pushSprite(
+                    cmd.sprite, ShooterCore::WorldPos { sx, sy }, cmd.facing, cmd.layer, cmd.rotationDegrees);
             }
         } else if (cmd.type == ShooterCore::RenderCommandType::DrawBeam) {
             const float sx0 { cmd.pos.x - camera_.pos.x };
@@ -230,8 +231,11 @@ void GameState::buildRenderQueue(ShooterCore::RenderCommandQueue& outQueue) noex
         const SpawnerNode& nest { spawner_.getNest(i) };
         const float sx { nest.pos.x - camera_.pos.x };
         const float sy { nest.pos.y - camera_.pos.y };
-        if (sx >= -16.0f && sx <= kViewWidth && sy >= -16.0f && sy <= kViewHeight) {
-            ProceduralSprites::drawNestCore(outQueue, ShooterCore::WorldPos { sx, sy }, nest.destroyed);
+        if (sx >= -32.0f && sx <= kViewWidth && sy >= -32.0f && sy <= kViewHeight) {
+            const ShooterCore::SpriteId nestSpr { nest.destroyed ? ShooterCore::SpriteId::NestCoreDestroyed
+                                                                 : ShooterCore::SpriteId::NestCoreActive };
+            (void)outQueue.pushSprite(
+                nestSpr, ShooterCore::WorldPos { sx, sy }, ShooterCore::FacingDirection::Right, 2U);
         }
     }
 

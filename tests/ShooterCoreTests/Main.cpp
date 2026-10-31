@@ -65,6 +65,11 @@ TEST(ShooterCoreTests, GameEngine)
     ShooterCore::Test::runGameEngineTests();
 }
 
+TEST(ShooterCoreTests, Animation)
+{
+    ShooterCore::Test::runAnimationTests();
+}
+
 TEST(ShooterCoreTests, DeterminismSoak)
 {
     ShooterCore::Test::runDeterminismSoakTests();

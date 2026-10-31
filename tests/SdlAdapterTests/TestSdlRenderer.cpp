@@ -39,6 +39,20 @@ void runSdlRendererTests() noexcept
         SdlRenderer renderer;
         renderer.attachRenderer(win.getRenderer());
         TEST_ASSERT_TRUE(renderer.getRenderer() == win.getRenderer(), "Renderer pointer should match");
+        TEST_ASSERT_TRUE(renderer.getAtlas().isLoaded(), "SpriteAtlas should be initialized on attachRenderer");
+        TEST_ASSERT_TRUE(renderer.getAtlas().getTexture() != nullptr, "SpriteAtlas texture should be non-null");
+
+        const SDL_Rect robotWalkRect { renderer.getAtlas().getSourceRect(ShooterCore::SpriteId::PlayerRobotWalk1) };
+        TEST_ASSERT_EQ(robotWalkRect.w, 16, "Robot walk sprite width should be 16");
+        TEST_ASSERT_EQ(robotWalkRect.h, 32, "Robot walk sprite height should be 32");
+
+        const SDL_Rect jetRect { renderer.getAtlas().getSourceRect(ShooterCore::SpriteId::PlayerJet) };
+        TEST_ASSERT_EQ(jetRect.w, 32, "Jet sprite width should be 32");
+        TEST_ASSERT_EQ(jetRect.h, 16, "Jet sprite height should be 16");
+
+        const SDL_Rect tileRect { renderer.getAtlas().getTileSourceRect(ShooterCore::TileType::SolidWall) };
+        TEST_ASSERT_EQ(tileRect.w, 16, "SolidWall tile width should be 16");
+        TEST_ASSERT_EQ(tileRect.h, 16, "SolidWall tile height should be 16");
 
         // Build a rich test queue
         ShooterCore::RenderCommandQueue queue;

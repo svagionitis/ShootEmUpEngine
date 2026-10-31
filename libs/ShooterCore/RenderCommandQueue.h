@@ -26,6 +26,7 @@ struct RenderCommand final {
     float fillPct { 0.0f };
     ColorRgba color { };
     FacingDirection facing { FacingDirection::Right };
+    float rotationDegrees { 0.0f };
     std::uint8_t layer { 0U };
 };
 
@@ -75,8 +76,10 @@ public:
     /// @param[in] pos Continuous world position.
     /// @param[in] facing Horizontal facing orientation.
     /// @param[in] layer Drawing layer for depth sorting.
+    /// @param[in] rotationDegrees Optional rotation angle in degrees.
     /// @return true if successfully pushed; false if queue is full.
-    bool pushSprite(SpriteId sprite, WorldPos pos, FacingDirection facing, std::uint8_t layer) noexcept;
+    bool pushSprite(SpriteId sprite, WorldPos pos, FacingDirection facing, std::uint8_t layer,
+        float rotationDegrees = 0.0f) noexcept;
 
     /// @brief Push tile render command.
     /// @param[in] type Terrain material category.

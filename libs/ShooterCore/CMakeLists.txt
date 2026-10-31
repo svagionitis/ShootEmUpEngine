@@ -1,4 +1,6 @@
 add_library(ShooterCore STATIC
+    AnimationController.cpp
+    AnimationController.h
     AudioCommandQueue.cpp
     CollisionSolver.cpp
     EntityPool.cpp

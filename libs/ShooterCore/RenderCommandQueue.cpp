@@ -17,7 +17,8 @@ const RenderCommand& RenderCommandQueue::get(std::size_t idx) const noexcept
     return commands_[0U];
 }
 
-bool RenderCommandQueue::pushSprite(SpriteId sprite, WorldPos pos, FacingDirection facing, std::uint8_t layer) noexcept
+bool RenderCommandQueue::pushSprite(
+    SpriteId sprite, WorldPos pos, FacingDirection facing, std::uint8_t layer, float rotationDegrees) noexcept
 {
     if (count_ >= kCapacity) {
         return false;
@@ -34,6 +35,7 @@ bool RenderCommandQueue::pushSprite(SpriteId sprite, WorldPos pos, FacingDirecti
     cmd.fillPct = 0.0f;
     cmd.color = ColorRgba { };
     cmd.facing = facing;
+    cmd.rotationDegrees = rotationDegrees;
     cmd.layer = layer;
 
     ++count_;

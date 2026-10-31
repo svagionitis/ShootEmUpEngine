@@ -7,6 +7,8 @@ add_library(SdlAdapter STATIC
     SdlRenderer.h
     SdlWindow.cpp
     SdlWindow.h
+    SpriteAtlas.cpp
+    SpriteAtlas.h
     TimePacer.cpp
     TimePacer.h
 )

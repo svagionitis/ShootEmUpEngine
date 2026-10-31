@@ -5,6 +5,7 @@
 
 #include <array>
 
+#include "AnimationController.h"
 #include "AudioCommandQueue.h"
 #include "CollisionSolver.h"
 #include "EngineInput.h"
@@ -142,6 +143,11 @@ public:
         return transformSys_;
     }
 
+    [[nodiscard]] const AnimationController& getAnimation() const noexcept
+    {
+        return anim_;
+    }
+
     /// @brief Spawn an enemy entity into the simulation.
     /// @param[in] type Entity classification category.
     /// @param[in] pos Continuous world coordinates.
@@ -162,6 +168,7 @@ private:
     EntityPool entities_ { };
     TransformSystem transformSys_ { };
     WeaponSystem weaponSys_ { };
+    AnimationController anim_ { };
 
     RenderCommandQueue renderQueue_ { };
     AudioCommandQueue audioQueue_ { };
@@ -174,6 +181,7 @@ private:
     CameraViewport camera_ { };
     bool onGround_ { false };
     bool isAlive_ { true };
+    bool playerCrouch_ { false };
 };
 
 } // namespace ShooterCore

@@ -1,5 +1,6 @@
 add_executable(ShooterCoreTests
     Main.cpp
+    TestAnimationController.cpp
     TestCollisionSolver.cpp
     TestCommandQueues.cpp
     TestDeterminismSoak.cpp
@@ -50,4 +51,5 @@ register_shooter_test(ShooterCore_EngineInput      EngineInput      "unit;input"
 register_shooter_test(ShooterCore_CommandQueues    CommandQueues    "queues;memory"      5)
 register_shooter_test(ShooterCore_EntityPool       EntityPool       "memory;lifecycle"   10)
 register_shooter_test(ShooterCore_GameEngine       GameEngine       "integration;engine" 15)
+register_shooter_test(ShooterCore_Animation        Animation        "unit;animation"     5)
 register_shooter_test(ShooterCore_DeterminismSoak  DeterminismSoak  "soak;determinism"   60)

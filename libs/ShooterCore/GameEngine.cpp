@@ -9,6 +9,7 @@
 
 #include <glog/logging.h>
 
+#include "AnimationController.h"
 #include "CollisionSolver.h"
 #include "Hitbox.h"
 #include "TileMap.h"
@@ -76,6 +77,7 @@ void GameEngine::step(DeltaTime dt, EngineInput input) noexcept
         return;
     }
 
+    anim_.update(dt);
     updateInput(dt, input);
     updatePhysics(dt, input);
     updateWeapons(dt, input);
@@ -86,6 +88,8 @@ void GameEngine::step(DeltaTime dt, EngineInput input) noexcept
 
 void GameEngine::updateInput(DeltaTime dt, EngineInput input) noexcept
 {
+    playerCrouch_ = input.isDown() && (transformSys_.mode() == TransformMode::Robot);
+
     if (input.isTransform()) {
         const TransformResult res { transformSys_.requestTransform(playerPos_, map_) };
         if (res == TransformResult::Success) {
@@ -341,19 +345,29 @@ void GameEngine::emitCommands() noexcept
             continue;
         }
 
-        const SpriteId spr { (slt.data.type == EntityType::PatrolWalker) ? SpriteId::EnemyPatrol
-                                                                         : SpriteId::EnemyFlyer };
+        SpriteId spr { anim_.currentEnemySprite(slt.data.type) };
+        if (spr == SpriteId::None) {
+            spr = (slt.data.type == EntityType::PatrolWalker) ? SpriteId::EnemyPatrol : SpriteId::EnemyFlyer;
+        }
         renderQueue_.pushSprite(spr, slt.data.pos, slt.data.facing, 5U);
     }
 
     // 3. Player craft
-    SpriteId playerSpr { SpriteId::PlayerRobotWalk1 };
+    SpriteId playerSpr { SpriteId::PlayerRobotIdle };
     if (transformSys_.isTransforming()) {
-        playerSpr = SpriteId::PlayerTransforming;
+        const float morphProgress { transformSys_.progress() };
+        const bool toJet { transformSys_.mode() == TransformMode::TransformingToJet };
+        playerSpr = anim_.currentMorphSprite(morphProgress, toJet);
     } else if (transformSys_.mode() == TransformMode::Jet) {
-        playerSpr = SpriteId::PlayerJet;
-    } else if (!onGround_) {
-        playerSpr = SpriteId::PlayerRobotJump;
+        playerSpr = anim_.currentJetSprite();
+
+        // Emit animated afterburner exhaust
+        const SpriteId exhaustSpr { anim_.currentJetExhaust() };
+        const float exOffset { (playerFacing_ == FacingDirection::Left) ? 16.0f : -24.0f };
+        renderQueue_.pushSprite(exhaustSpr, WorldPos { playerPos_.x + exOffset, playerPos_.y }, playerFacing_, 9U);
+    } else {
+        const bool isMoving { std::abs(playerVel_.dx) > 5.0f };
+        playerSpr = anim_.currentRobotSprite(isMoving, !onGround_, playerCrouch_);
     }
     renderQueue_.pushSprite(playerSpr, playerPos_, playerFacing_, 10U);
 

@@ -106,6 +106,7 @@ void runEngineInputTests() noexcept;
 void runCommandQueueTests() noexcept;
 void runEntityPoolTests() noexcept;
 void runGameEngineTests() noexcept;
+void runAnimationTests() noexcept;
 void runDeterminismSoakTests() noexcept;
 
 } // namespace ShooterCore::Test

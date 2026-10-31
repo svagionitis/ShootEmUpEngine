@@ -9,6 +9,7 @@
 #include <SDL.h>
 
 #include "RenderCommandQueue.h"
+#include "SpriteAtlas.h"
 #include "Types.h"
 
 namespace SdlAdapter {
@@ -33,11 +34,21 @@ namespace {
 void SdlRenderer::attachRenderer(SDL_Renderer* renderer) noexcept
 {
     renderer_ = renderer;
+    if (renderer_ != nullptr) {
+        (void)atlas_.init(renderer_);
+    } else {
+        atlas_.shutdown();
+    }
 }
 
 SDL_Renderer* SdlRenderer::getRenderer() const noexcept
 {
     return renderer_;
+}
+
+const SpriteAtlas& SdlRenderer::getAtlas() const noexcept
+{
+    return atlas_;
 }
 
 void SdlRenderer::clearScreen() noexcept
@@ -106,6 +117,14 @@ void SdlRenderer::drawTile(const ShooterCore::RenderCommand& cmd) noexcept
 
     const SDL_Rect tileRect { x, y, size, size };
 
+    if (atlas_.isLoaded()) {
+        const SDL_Rect srcRect { atlas_.getTileSourceRect(cmd.tileType) };
+        if (srcRect.w > 0 && srcRect.h > 0) {
+            (void)SDL_RenderCopy(renderer_, atlas_.getTexture(), &srcRect, &tileRect);
+            return;
+        }
+    }
+
     switch (cmd.tileType) {
     case ShooterCore::TileType::SolidWall: {
         // Metallic impenetrable labyrinth block: Slate steel fill with beveled highlight
@@ -163,6 +182,18 @@ void SdlRenderer::drawSprite(const ShooterCore::RenderCommand& cmd) noexcept
 {
     const float x { cmd.pos.x };
     const float y { cmd.pos.y };
+
+    if (atlas_.isLoaded()) {
+        const SDL_Rect srcRect { atlas_.getSourceRect(cmd.sprite) };
+        if (srcRect.w > 0 && srcRect.h > 0) {
+            const SDL_Rect dstRect { toIntClamped(x), toIntClamped(y), srcRect.w, srcRect.h };
+            const SDL_RendererFlip flip { (cmd.facing == ShooterCore::FacingDirection::Left) ? SDL_FLIP_HORIZONTAL
+                                                                                             : SDL_FLIP_NONE };
+            (void)SDL_RenderCopyEx(renderer_, atlas_.getTexture(), &srcRect, &dstRect,
+                static_cast<double>(cmd.rotationDegrees), nullptr, flip);
+            return;
+        }
+    }
 
     switch (cmd.sprite) {
     case ShooterCore::SpriteId::PlayerRobotWalk1:
