@@ -79,7 +79,24 @@ bool EgaMapLoader::decodeMap(const std::uint8_t* ptrData, std::size_t ptrSize, c
 bool EgaMapLoader::loadMap(
     const std::string& ptrPath, const std::string& mapPath, ShooterCore::TileMap& outMap) noexcept
 {
-    std::ifstream ptrFile(ptrPath, std::ios::binary);
+    std::string actualPtr { ptrPath };
+    std::string actualMap { mapPath };
+    std::ifstream ptrFile(actualPtr, std::ios::binary);
+    if (!ptrFile.is_open()) {
+        actualPtr = "../../../" + ptrPath;
+        actualMap = "../../../" + mapPath;
+        ptrFile.open(actualPtr, std::ios::binary);
+    }
+    if (!ptrFile.is_open()) {
+        actualPtr = "../../" + ptrPath;
+        actualMap = "../../" + mapPath;
+        ptrFile.open(actualPtr, std::ios::binary);
+    }
+    if (!ptrFile.is_open()) {
+        actualPtr = "../" + ptrPath;
+        actualMap = "../" + mapPath;
+        ptrFile.open(actualPtr, std::ios::binary);
+    }
     if (!ptrFile.is_open()) {
         LOG(WARNING) << "EgaMapLoader::loadMap: Failed to open pointer table: " << ptrPath;
         return false;
@@ -88,7 +105,7 @@ bool EgaMapLoader::loadMap(
     std::vector<std::uint8_t> ptrBuffer((std::istreambuf_iterator<char>(ptrFile)), std::istreambuf_iterator<char>());
     ptrFile.close();
 
-    std::ifstream mapFile(mapPath, std::ios::binary);
+    std::ifstream mapFile(actualMap, std::ios::binary);
     if (!mapFile.is_open()) {
         LOG(WARNING) << "EgaMapLoader::loadMap: Failed to open map data: " << mapPath;
         return false;

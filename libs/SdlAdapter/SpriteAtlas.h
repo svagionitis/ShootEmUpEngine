@@ -58,12 +58,20 @@ public:
     /// @return Source rectangle on the sprite atlas.
     [[nodiscard]] SDL_Rect getTileSourceRect(ShooterCore::TileType tile) const noexcept;
 
+    /// @brief Query whether authentic 48x32 EGA robot sprites were loaded into atlas.
+    /// @return true if EGA robot frames are active, false if procedural fallback is in use.
+    [[nodiscard]] bool isEgaRobotLoaded() const noexcept
+    {
+        return isLoadedEgaRobot_;
+    }
+
 private:
     void generateAtlasPixels(std::uint32_t* pixelBuffer) noexcept;
     bool loadEgaRobot(std::uint32_t* pixelBuffer) noexcept;
     void buildRectTables() noexcept;
 
     SDL_Texture* atlasTexture_ { nullptr };
+    bool isLoadedEgaRobot_ { false };
     std::array<SDL_Rect, 256U> spriteRects_ { };
     std::array<SDL_Rect, 8U> tileRects_ { };
 };

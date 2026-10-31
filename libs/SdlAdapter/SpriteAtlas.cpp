@@ -401,7 +401,7 @@ bool SpriteAtlas::init(SDL_Renderer* renderer) noexcept
     generateAtlasPixels(pixelBuffer.data());
 
     SDL_Surface* surface { SDL_CreateRGBSurfaceWithFormatFrom(pixelBuffer.data(), kAtlasWidth, kAtlasHeight, 32,
-        kAtlasWidth * static_cast<int>(sizeof(std::uint32_t)), SDL_PIXELFORMAT_RGBA8888) };
+        kAtlasWidth * static_cast<int>(sizeof(std::uint32_t)), SDL_PIXELFORMAT_RGBA32) };
 
     if (surface == nullptr) {
         return false;
@@ -486,6 +486,7 @@ void SpriteAtlas::generateAtlasPixels(std::uint32_t* pixelBuffer) noexcept
 bool SpriteAtlas::loadEgaRobot(std::uint32_t* pixelBuffer) noexcept
 {
     if (pixelBuffer == nullptr) {
+        isLoadedEgaRobot_ = false;
         return false;
     }
 
@@ -494,6 +495,7 @@ bool SpriteAtlas::loadEgaRobot(std::uint32_t* pixelBuffer) noexcept
         const std::size_t loaded { EgaRobotLoader::loadSprites(
             "assets/thexder/EGAROBOT.BIN", decoded.data(), 88U, kColorLightBlue, kColorTransparent) };
         if (loaded == 0U) {
+            isLoadedEgaRobot_ = false;
             return false;
         }
 
@@ -510,8 +512,10 @@ bool SpriteAtlas::loadEgaRobot(std::uint32_t* pixelBuffer) noexcept
                 }
             }
         }
+        isLoadedEgaRobot_ = true;
         return true;
     } catch (...) {
+        isLoadedEgaRobot_ = false;
         return false;
     }
 }
@@ -572,14 +576,48 @@ void SpriteAtlas::buildRectTables() noexcept
     spriteRects_[static_cast<std::size_t>(ShooterCore::SpriteId::TileDestructibleWall)] = SDL_Rect { 64, 64, 16, 16 };
     spriteRects_[static_cast<std::size_t>(ShooterCore::SpriteId::TileHazardLava)] = SDL_Rect { 80, 64, 16, 16 };
 
-    // Authentic 48x32 EGA mecha frames (0..87)
+    // Authentic 48x32 EGA mecha frames (0..87) or guaranteed fallback to procedural sprites
     for (std::uint8_t i { 0U }; i < 88U; ++i) {
-        const int col { static_cast<int>(i % 10U) };
-        const int row { static_cast<int>(i / 10U) };
-        const int x { col * 48 };
-        const int y { 224 + row * 32 };
         const auto sprId { ShooterCore::toEgaMechaSpriteId(i) };
-        spriteRects_[static_cast<std::size_t>(sprId)] = SDL_Rect { x, y, 48, 32 };
+        if (isLoadedEgaRobot_) {
+            const int col { static_cast<int>(i % 10U) };
+            const int row { static_cast<int>(i / 10U) };
+            const int x { col * 48 };
+            const int y { 224 + row * 32 };
+            spriteRects_[static_cast<std::size_t>(sprId)] = SDL_Rect { x, y, 48, 32 };
+        } else {
+            // Guaranteed fallback: map EGA mecha frames to corresponding procedural sprite rects
+            if (i <= 23U) {
+                // Walking / standing / turning
+                const auto walkSub { i % 4U };
+                if (walkSub == 1U) {
+                    spriteRects_[static_cast<std::size_t>(sprId)]
+                        = spriteRects_[static_cast<std::size_t>(ShooterCore::SpriteId::PlayerRobotWalk1)];
+                } else if (walkSub == 3U) {
+                    spriteRects_[static_cast<std::size_t>(sprId)]
+                        = spriteRects_[static_cast<std::size_t>(ShooterCore::SpriteId::PlayerRobotWalk2)];
+                } else {
+                    spriteRects_[static_cast<std::size_t>(sprId)]
+                        = spriteRects_[static_cast<std::size_t>(ShooterCore::SpriteId::PlayerRobotIdle)];
+                }
+            } else if (i <= 39U) {
+                // Crouching
+                spriteRects_[static_cast<std::size_t>(sprId)]
+                    = spriteRects_[static_cast<std::size_t>(ShooterCore::SpriteId::PlayerRobotCrouch)];
+            } else if (i <= 47U) {
+                // Jumping / falling
+                spriteRects_[static_cast<std::size_t>(sprId)]
+                    = spriteRects_[static_cast<std::size_t>(ShooterCore::SpriteId::PlayerRobotJump)];
+            } else if (i <= 79U) {
+                // Jet flight
+                spriteRects_[static_cast<std::size_t>(sprId)]
+                    = spriteRects_[static_cast<std::size_t>(ShooterCore::SpriteId::PlayerJet)];
+            } else {
+                // Morphing / transforming
+                spriteRects_[static_cast<std::size_t>(sprId)]
+                    = spriteRects_[static_cast<std::size_t>(ShooterCore::SpriteId::PlayerMorph2)];
+            }
+        }
     }
 }
 

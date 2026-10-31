@@ -126,6 +126,7 @@ private:
     EntitySpawner spawner_ { };
     HudOverlay hud_ { };
     ShooterCore::CameraViewport camera_ { };
+    ShooterCore::WorldPos exitPortal_ { 0.0f, 0.0f };
 
     GameStateMode mode_ { GameStateMode::Title };
     std::uint32_t score_ { 0U };

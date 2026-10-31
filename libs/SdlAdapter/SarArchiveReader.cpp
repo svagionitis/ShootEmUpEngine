@@ -59,16 +59,35 @@ bool SarArchiveReader::open(const std::string& ixPath, const std::string& sarPat
 {
     close();
 
-    std::ifstream ixFile(ixPath, std::ios::binary);
+    std::string actualIx { ixPath };
+    std::string actualSar { sarPath };
+
+    std::ifstream ixFile(actualIx, std::ios::binary);
+    if (!ixFile.is_open()) {
+        actualIx = "../../../" + ixPath;
+        actualSar = "../../../" + sarPath;
+        ixFile.open(actualIx, std::ios::binary);
+    }
+    if (!ixFile.is_open()) {
+        actualIx = "../../" + ixPath;
+        actualSar = "../../" + sarPath;
+        ixFile.open(actualIx, std::ios::binary);
+    }
+    if (!ixFile.is_open()) {
+        actualIx = "../" + ixPath;
+        actualSar = "../" + sarPath;
+        ixFile.open(actualIx, std::ios::binary);
+    }
     if (!ixFile.is_open()) {
         return false;
     }
 
-    std::ifstream sarCheck(sarPath, std::ios::binary);
+    std::ifstream sarCheck(actualSar, std::ios::binary);
     if (!sarCheck.is_open()) {
         return false;
     }
     sarCheck.close();
+    sarPath_ = actualSar;
 
     ixFile.seekg(0, std::ios::end);
     const auto ixSize { static_cast<std::size_t>(ixFile.tellg()) };
@@ -104,7 +123,6 @@ bool SarArchiveReader::open(const std::string& ixPath, const std::string& sarPat
         entry.offset = (offHigh << 16U) | offLow;
     }
 
-    sarPath_ = sarPath;
     return true;
 }
 

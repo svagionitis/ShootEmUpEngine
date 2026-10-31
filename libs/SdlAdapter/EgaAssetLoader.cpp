@@ -61,7 +61,20 @@ std::size_t EgaAssetLoader::loadTiles(const std::string& filePath, std::uint32_t
         return 0U;
     }
 
-    std::ifstream file(filePath, std::ios::binary);
+    std::string actualPath { filePath };
+    std::ifstream file(actualPath, std::ios::binary);
+    if (!file.is_open()) {
+        actualPath = "../../../" + filePath;
+        file.open(actualPath, std::ios::binary);
+    }
+    if (!file.is_open()) {
+        actualPath = "../../" + filePath;
+        file.open(actualPath, std::ios::binary);
+    }
+    if (!file.is_open()) {
+        actualPath = "../" + filePath;
+        file.open(actualPath, std::ios::binary);
+    }
     if (!file.is_open()) {
         return 0U;
     }
@@ -121,7 +134,20 @@ bool EgaAssetLoader::loadTitle(const std::string& filePath, std::uint32_t* outRg
         return false;
     }
 
-    std::ifstream file(filePath, std::ios::binary);
+    std::string actualPath { filePath };
+    std::ifstream file(actualPath, std::ios::binary);
+    if (!file.is_open()) {
+        actualPath = "../../../" + filePath;
+        file.open(actualPath, std::ios::binary);
+    }
+    if (!file.is_open()) {
+        actualPath = "../../" + filePath;
+        file.open(actualPath, std::ios::binary);
+    }
+    if (!file.is_open()) {
+        actualPath = "../" + filePath;
+        file.open(actualPath, std::ios::binary);
+    }
     if (!file.is_open()) {
         return false;
     }

@@ -30,11 +30,11 @@ int main(int argc, char* argv[])
     gflags::ParseCommandLineFlags(&argc, &argv, true);
     google::InitGoogleLogging(argv[0]);
 
-    LOG(INFO) << "Starting Thexder Game Engine (Phase 14)...";
+    LOG(INFO) << "Starting Firehawk: Thexder - The Second Contact Engine...";
 
     SdlAdapter::SdlWindow window;
     SdlAdapter::WindowConfig winConfig;
-    winConfig.title = "Thexder - 1985 Game Arts Tribute";
+    winConfig.title = "Firehawk: Thexder - The Second Contact";
     winConfig.windowWidth = FLAGS_width;
     winConfig.windowHeight = FLAGS_height;
     winConfig.logicalWidth = 320;

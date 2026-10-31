@@ -292,7 +292,7 @@ void SdlRenderer::drawSprite(const ShooterCore::RenderCommand& cmd) noexcept
         if (srcRect.w > 0 && srcRect.h > 0) {
             float drawX { x };
             float drawY { y };
-            if (srcRect.w == 48) {
+            if (srcRect.w == 48 && atlas_.isEgaRobotLoaded()) {
                 if (ShooterCore::isEgaMechaJet(cmd.sprite)) {
                     drawX -= 8.0f;
                     drawY -= 8.0f;

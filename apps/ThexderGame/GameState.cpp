@@ -13,6 +13,8 @@
 #include "Level1Map.h"
 #include "ProceduralSprites.h"
 #include "RenderCommandQueue.h"
+#include "SarArchiveReader.h"
+#include "SarStageLoader.h"
 #include "TileMap.h"
 #include "Types.h"
 
@@ -48,8 +50,25 @@ void GameState::resetGame() noexcept
     stateTimer_ = 0.0f;
     warningTimer_ = 0.0f;
 
-    Level1Map::loadFromBinary(map_);
-    engine_.initLevel(map_, Level1Map::getPlayerSpawn());
+    // Load authentic Firehawk Stage 1 Zone 1 (KM11 Earth Orbit Base) from RES1.SAR
+    SdlAdapter::SarArchiveReader sarReader;
+    bool stageLoaded { false };
+    if (sarReader.open("assets/firehawk/RES1.IX", "assets/firehawk/RES1.SAR")) {
+        stageLoaded = SdlAdapter::SarStageLoader::loadStageZone(sarReader, 1U, 1U, map_);
+        sarReader.close();
+    }
+
+    ShooterCore::WorldPos spawnPos { Level1Map::getPlayerSpawn() };
+    if (stageLoaded) {
+        // Firehawk Stage 1 Zone 1 orbital docking bay spawn position
+        spawnPos = ShooterCore::WorldPos { 48.0f, 64.0f };
+        exitPortal_ = ShooterCore::WorldPos { 120.0f * 16.0f, 14.0f * 16.0f };
+    } else {
+        Level1Map::loadFromBinary(map_);
+        exitPortal_ = Level1Map::getExitPortal();
+    }
+
+    engine_.initLevel(map_, spawnPos);
     spawner_.initLevel1Nests();
 
     // Register authentic alien nests from BUGDB01.BIN with fallback
@@ -113,9 +132,8 @@ void GameState::step(ShooterCore::DeltaTime dt, ShooterCore::EngineInput input) 
 
         // Check level completion exit portal
         const ShooterCore::WorldPos ppos { engine_.getPlayerPos() };
-        const ShooterCore::WorldPos eport { Level1Map::getExitPortal() };
-        const float ex { ppos.x - eport.x };
-        const float ey { ppos.y - eport.y };
+        const float ex { ppos.x - exitPortal_.x };
+        const float ey { ppos.y - exitPortal_.y };
         if (((ex * ex) + (ey * ey)) <= 28.0f * 28.0f) {
             mode_ = GameStateMode::LevelComplete;
             score_ += static_cast<std::uint32_t>(engine_.getPlayerEnergy().value()) * 100U;
@@ -264,9 +282,8 @@ void GameState::buildRenderQueue(ShooterCore::RenderCommandQueue& outQueue) noex
     }
 
     // 3. Extraction Gate / Exit Portal
-    const ShooterCore::WorldPos eport { Level1Map::getExitPortal() };
-    const float esx { eport.x - effectiveCam.x };
-    const float esy { eport.y - effectiveCam.y };
+    const float esx { exitPortal_.x - effectiveCam.x };
+    const float esy { exitPortal_.y - effectiveCam.y };
     if (esx >= -32.0f && esx <= kViewWidth && esy >= -48.0f && esy <= kViewHeight) {
         outQueue.pushBar(ShooterCore::WorldPos { esx, esy - 16.0f }, 16.0f, 32.0f, 1.0f,
             ShooterCore::ColorRgba { 50U, 240U, 120U, 200U });

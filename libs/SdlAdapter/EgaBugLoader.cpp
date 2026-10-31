@@ -54,7 +54,20 @@ std::size_t EgaBugLoader::decodeBugDb(
 
 std::size_t EgaBugLoader::loadBugDb(const std::string& filePath, ShooterCore::NestManager& outNests) noexcept
 {
-    std::ifstream file(filePath, std::ios::binary);
+    std::string actualPath { filePath };
+    std::ifstream file(actualPath, std::ios::binary);
+    if (!file.is_open()) {
+        actualPath = "../../../" + filePath;
+        file.open(actualPath, std::ios::binary);
+    }
+    if (!file.is_open()) {
+        actualPath = "../../" + filePath;
+        file.open(actualPath, std::ios::binary);
+    }
+    if (!file.is_open()) {
+        actualPath = "../" + filePath;
+        file.open(actualPath, std::ios::binary);
+    }
     if (!file.is_open()) {
         LOG(WARNING) << "EgaBugLoader::loadBugDb: Failed to open: " << filePath;
         return 0U;

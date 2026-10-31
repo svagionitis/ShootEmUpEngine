@@ -53,6 +53,15 @@ std::size_t EgaRobotLoader::loadSprites(const std::string& filePath, std::uint32
 
     std::ifstream file(filePath, std::ios::binary);
     if (!file.is_open()) {
+        file.open("../../../" + filePath, std::ios::binary);
+    }
+    if (!file.is_open()) {
+        file.open("../../" + filePath, std::ios::binary);
+    }
+    if (!file.is_open()) {
+        file.open("../" + filePath, std::ios::binary);
+    }
+    if (!file.is_open()) {
         return 0U;
     }
 
