@@ -5,9 +5,11 @@
 
 #include <algorithm>
 #include <array>
+#include <vector>
 
 #include <SDL.h>
 
+#include "EgaRobotLoader.h"
 #include "Types.h"
 
 namespace SdlAdapter {
@@ -388,9 +390,13 @@ bool SpriteAtlas::init(SDL_Renderer* renderer) noexcept
 
     shutdown();
 
-    // Allocate 256x256 RGBA pixel buffer on stack/heap during init only
-    std::array<std::uint32_t, kAtlasWidth * kAtlasHeight> pixelBuffer { };
-    pixelBuffer.fill(kColorTransparent);
+    // Allocate 512x512 RGBA pixel buffer during init only
+    std::vector<std::uint32_t> pixelBuffer;
+    try {
+        pixelBuffer.assign(static_cast<std::size_t>(kAtlasWidth * kAtlasHeight), kColorTransparent);
+    } catch (...) {
+        return false;
+    }
 
     generateAtlasPixels(pixelBuffer.data());
 
@@ -472,6 +478,42 @@ void SpriteAtlas::generateAtlasPixels(std::uint32_t* pixelBuffer) noexcept
 
     // 7. Tilesets
     drawTilesets(pixelBuffer, kAtlasWidth);
+
+    // 8. Authentic EGA Mecha Frames (Y: 224..511)
+    (void)loadEgaRobot(pixelBuffer);
+}
+
+bool SpriteAtlas::loadEgaRobot(std::uint32_t* pixelBuffer) noexcept
+{
+    if (pixelBuffer == nullptr) {
+        return false;
+    }
+
+    try {
+        std::vector<std::uint32_t> decoded(88U * 48U * 32U, 0U);
+        const std::size_t loaded { EgaRobotLoader::loadSprites(
+            "assets/thexder/EGAROBOT.BIN", decoded.data(), 88U, kColorLightBlue, kColorTransparent) };
+        if (loaded == 0U) {
+            return false;
+        }
+
+        for (std::size_t i { 0U }; i < loaded; ++i) {
+            const int col { static_cast<int>(i % 10U) };
+            const int row { static_cast<int>(i / 10U) };
+            const int dstX { col * 48 };
+            const int dstY { 224 + row * 32 };
+
+            const std::uint32_t* srcFrame { decoded.data() + i * (48U * 32U) };
+            for (int dy { 0 }; dy < 32; ++dy) {
+                for (int dx { 0 }; dx < 48; ++dx) {
+                    putPixel(pixelBuffer, kAtlasWidth, dstX + dx, dstY + dy, srcFrame[dy * 48 + dx]);
+                }
+            }
+        }
+        return true;
+    } catch (...) {
+        return false;
+    }
 }
 
 void SpriteAtlas::buildRectTables() noexcept
@@ -529,6 +571,16 @@ void SpriteAtlas::buildRectTables() noexcept
     spriteRects_[static_cast<std::size_t>(ShooterCore::SpriteId::TileCircuitWall)] = SDL_Rect { 48, 64, 16, 16 };
     spriteRects_[static_cast<std::size_t>(ShooterCore::SpriteId::TileDestructibleWall)] = SDL_Rect { 64, 64, 16, 16 };
     spriteRects_[static_cast<std::size_t>(ShooterCore::SpriteId::TileHazardLava)] = SDL_Rect { 80, 64, 16, 16 };
+
+    // Authentic 48x32 EGA mecha frames (0..87)
+    for (std::uint8_t i { 0U }; i < 88U; ++i) {
+        const int col { static_cast<int>(i % 10U) };
+        const int row { static_cast<int>(i / 10U) };
+        const int x { col * 48 };
+        const int y { 224 + row * 32 };
+        const auto sprId { ShooterCore::toEgaMechaSpriteId(i) };
+        spriteRects_[static_cast<std::size_t>(sprId)] = SDL_Rect { x, y, 48, 32 };
+    }
 }
 
 SDL_Rect SpriteAtlas::getSourceRect(ShooterCore::SpriteId id) const noexcept

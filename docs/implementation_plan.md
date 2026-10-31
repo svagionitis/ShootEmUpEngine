@@ -520,6 +520,12 @@ Based on the reverse engineering of the original DOS releases ([thexder_firehawk
 |         • 5-Weapon Secondary Arsenal (Missile, Homing, Flash, Napalm, Shield) |
 |         • KMxx / CTxx Stage Progression & Boss Arena Battles                  |
 |         • Dual-Resolution Support (MCGA 320x200 + EGA 640x200 HUD)            |
+|         │                                                                     |
+|         ▼                                                                     |
+|   [Phase 18: Authentic EGA Mecha Sprite Atlas & Animation Integration]        |
+|         • 512x512 Sprite Atlas Expansion & EGAROBOT.BIN Runtime Ingestion     |
+|         • 48x32 Visual Anchor Offsets (Centering on 16x32 / 32x16 Hitboxes)   |
+|         • 88-Frame State Mapping (8-Stride Walk, 8-Angle Aim, 8-Dir Flight)   |
 +-------------------------------------------------------------------------------+
 ```
 
@@ -546,7 +552,14 @@ flowchart TD
         C3["Dual-Resolution MCGA 320x200 + EGA 640x200 Display"]
     end
 
-    Phase15 --> Phase16 --> Phase17
+    subgraph Phase18["Phase 18: Authentic EGA Mecha Integration"]
+        D1["512x512 Sprite Atlas Texture Expansion"]
+        D2["Runtime EgaRobotLoader Ingestion & Procedural Deprecation"]
+        D3["48x32 Visual Anchor Centering (pos.x - 16)"]
+        D4["88-Frame AnimationController Mapping"]
+    end
+
+    Phase15 --> Phase16 --> Phase17 --> Phase18
 ```
 
 ---
@@ -611,5 +624,34 @@ flowchart TD
     - Multi-stage boss encounters featuring animated destructible hitboxes and vulnerable weak-point cores.
   - **Dual-Resolution Presentation**:
     - Combines 320x200 MCGA 256-color gameplay viewport with crisp EGA 640x200 cockpit instrumentation.
+
+---
+
+### Phase 18: Authentic EGA Mecha Sprite Atlas & Directional Animation Integration
+- **Objective**: Replace procedural geometric mecha rendering with authentic 88-frame `EGAROBOT.BIN` sprites, including visual anchor centering and 8-way directional aiming/flight kinematics.
+- **Detailed Plan**: See [docs/phase18_plan.md](phase18_plan.md) for full architectural and implementation specifications.
+- **Reference**: See EGA frame layout in [thexder_firehawk_dos_investigation.md](thexder_firehawk_dos_investigation.md) and [phase15_plan.md](phase15_plan.md).
+- **Key Deliverables**:
+  - **512x512 Sprite Atlas Texture Expansion (`libs/SdlAdapter/SpriteAtlas.h/.cpp`)**:
+    - Expands texture dimensions from 256x256 ($65,536$ px) to 512x512 ($262,144$ px) to house all 88 frames of 48x32 px ($135,168$ px) alongside tiles and enemy sprites.
+    - Integrates `EgaRobotLoader::loadSprites()` into `SpriteAtlas::init()`, mapping unpacked frame rects into `spriteRects_`.
+    - Preserves procedural drawing as an automatic fallback if `assets/thexder/EGAROBOT.BIN` is unavailable.
+  - **Visual Anchor Offsetting & Centering (`libs/SdlAdapter/SdlRenderer.cpp`)**:
+    - Decouples visual 48x32 render bounds from physical 16x32 (Robot) and 32x16 (Jet) swept AABB hitboxes.
+    - Applies runtime horizontal/vertical draw offsets:
+      - Robot Mode: Offset by $(-16\text{ px}, 0\text{ px})$ to center 48 px frame over the 16 px hitbox.
+      - Jet Mode: Offset by $(-8\text{ px}, -8\text{ px})$ to align 48 px fuselage with the 1-tile 32x16 flight clearance box.
+  - **88-Frame Directional State Mapping (`libs/ShooterCore/AnimationController.h/.cpp`)**:
+    - Expands state machine to index full frame allocations:
+      - Frames `0..7` / `8..15`: 8-frame walking cycles (Right / Left).
+      - Frames `16..23` / `24..31`: 8-way directional aiming while laser is active (Horizontal, Diagonal-Up, Vertical, Diagonal-Down).
+      - Frames `32..39`: Low-profile crouch stances for 1-tile crawlways.
+      - Frames `40..55`: Sequential metamorphosis transformation steps.
+      - Frames `56..71`: 8-way directional supersonic jet headings based on velocity vector $(v_x, v_y)$.
+      - Frames `72..79`: Afterburner thruster cycling.
+      - Frames `80..87`: Shield barrier encapsulation and damage flash frames.
+  - **Zero-Allocation Safety & Determinism**:
+    - State mapping and offset calculations execute strictly `noexcept` with zero dynamic heap allocations on frame tick (`CERT ERR55-CPP`).
+
 
 

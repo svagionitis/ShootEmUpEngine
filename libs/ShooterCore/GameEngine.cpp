@@ -492,21 +492,24 @@ void GameEngine::emitCommands() noexcept
     }
 
     // 3. Player craft
-    SpriteId playerSpr { SpriteId::PlayerRobotIdle };
-    if (transformSys_.isTransforming()) {
-        const float morphProgress { transformSys_.progress() };
-        const bool toJet { transformSys_.mode() == TransformMode::TransformingToJet };
-        playerSpr = anim_.currentMorphSprite(morphProgress, toJet);
-    } else if (transformSys_.mode() == TransformMode::Jet) {
-        playerSpr = anim_.currentJetSprite();
+    const bool isMoving { std::abs(playerVel_.dx) > 5.0f };
+    const bool isLaserActive { weaponSys_.isLaserActive() };
+    float aimAngle { 0.0f };
+    if (isLaserActive) {
+        const BeamSegment beam { weaponSys_.getBeamSegment() };
+        aimAngle = std::atan2(beam.endpoint.y - beam.origin.y, beam.endpoint.x - beam.origin.x);
+    }
+    const float morphProgress { transformSys_.progress() };
+    const bool isShieldActive { weaponSys_.isShieldActive() };
 
-        // Emit animated afterburner exhaust
+    const SpriteId playerSpr { anim_.currentEgaMechaSprite(transformSys_.mode(), playerFacing_, isMoving, !onGround_,
+        playerCrouch_, isLaserActive, aimAngle, playerVel_, morphProgress, isShieldActive) };
+
+    if (transformSys_.mode() == TransformMode::Jet && !isEgaMechaSprite(playerSpr)) {
+        // Emit animated afterburner exhaust for procedural fallback
         const SpriteId exhaustSpr { anim_.currentJetExhaust() };
         const float exOffset { (playerFacing_ == FacingDirection::Left) ? 16.0f : -24.0f };
         renderQueue_.pushSprite(exhaustSpr, WorldPos { playerPos_.x + exOffset, playerPos_.y }, playerFacing_, 9U);
-    } else {
-        const bool isMoving { std::abs(playerVel_.dx) > 5.0f };
-        playerSpr = anim_.currentRobotSprite(isMoving, !onGround_, playerCrouch_);
     }
     renderQueue_.pushSprite(playerSpr, playerPos_, playerFacing_, 10U);
 

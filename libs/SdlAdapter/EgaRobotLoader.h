@@ -17,6 +17,25 @@ public:
     static constexpr std::size_t kTotalFrames { 88U };
     static constexpr std::size_t kRobotTotalSize { 16992U };
 
+    static constexpr std::size_t kWalkRightStart { 0U };
+    static constexpr std::size_t kWalkRightCount { 8U };
+    static constexpr std::size_t kWalkLeftStart { 8U };
+    static constexpr std::size_t kWalkLeftCount { 8U };
+    static constexpr std::size_t kAimRightStart { 16U };
+    static constexpr std::size_t kAimRightCount { 8U };
+    static constexpr std::size_t kAimLeftStart { 24U };
+    static constexpr std::size_t kAimLeftCount { 8U };
+    static constexpr std::size_t kCrouchStart { 32U };
+    static constexpr std::size_t kCrouchCount { 8U };
+    static constexpr std::size_t kMorphStart { 40U };
+    static constexpr std::size_t kMorphCount { 16U };
+    static constexpr std::size_t kJetFlightStart { 56U };
+    static constexpr std::size_t kJetFlightCount { 16U };
+    static constexpr std::size_t kThrusterStart { 72U };
+    static constexpr std::size_t kThrusterCount { 8U };
+    static constexpr std::size_t kShieldStart { 80U };
+    static constexpr std::size_t kShieldCount { 8U };
+
     /// @brief Decodes 88 48x32 mecha animation frames into 32-bit RGBA buffer.
     /// @param data Pointer to raw 16992-byte EGAROBOT.BIN buffer.
     /// @param size Buffer size in bytes.

@@ -50,6 +50,10 @@ void runSdlRendererTests() noexcept
         TEST_ASSERT_EQ(jetRect.w, 32, "Jet sprite width should be 32");
         TEST_ASSERT_EQ(jetRect.h, 16, "Jet sprite height should be 16");
 
+        const SDL_Rect egaRobotRect { renderer.getAtlas().getSourceRect(ShooterCore::toEgaMechaSpriteId(0U)) };
+        TEST_ASSERT_EQ(egaRobotRect.w, 48, "EGA mecha sprite width should be 48");
+        TEST_ASSERT_EQ(egaRobotRect.h, 32, "EGA mecha sprite height should be 32");
+
         const SDL_Rect tileRect { renderer.getAtlas().getTileSourceRect(ShooterCore::TileType::SolidWall) };
         TEST_ASSERT_EQ(tileRect.w, 16, "SolidWall tile width should be 16");
         TEST_ASSERT_EQ(tileRect.h, 16, "SolidWall tile height should be 16");

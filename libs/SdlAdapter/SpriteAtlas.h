@@ -20,8 +20,8 @@ namespace SdlAdapter {
 ///          Thexder retro pixel-art sprites and maps SpriteId to SDL_Rect coords.
 class SpriteAtlas final {
 public:
-    static constexpr int kAtlasWidth { 256 };
-    static constexpr int kAtlasHeight { 256 };
+    static constexpr int kAtlasWidth { 512 };
+    static constexpr int kAtlasHeight { 512 };
 
     SpriteAtlas() noexcept = default;
     ~SpriteAtlas() noexcept;
@@ -60,10 +60,11 @@ public:
 
 private:
     void generateAtlasPixels(std::uint32_t* pixelBuffer) noexcept;
+    bool loadEgaRobot(std::uint32_t* pixelBuffer) noexcept;
     void buildRectTables() noexcept;
 
     SDL_Texture* atlasTexture_ { nullptr };
-    std::array<SDL_Rect, 64U> spriteRects_ { };
+    std::array<SDL_Rect, 256U> spriteRects_ { };
     std::array<SDL_Rect, 8U> tileRects_ { };
 };
 

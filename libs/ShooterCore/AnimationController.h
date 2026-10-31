@@ -14,6 +14,7 @@ namespace ShooterCore {
 class AnimationController final {
 public:
     static constexpr float kWalkFrameDuration { 0.120f };
+    static constexpr float kWalk8FrameDuration { 0.080f };
     static constexpr float kExhaustFrameDuration { 0.060f };
     static constexpr float kEnemyFrameDuration { 0.150f };
     static constexpr float kExplosionTotalTime { 0.320f };
@@ -61,11 +62,34 @@ public:
     /// @return Active SpriteId for explosion phase.
     [[nodiscard]] SpriteId currentExplosionSprite(float progress) const noexcept;
 
+    /// @brief Select authentic EGA mecha sprite frame based on full simulation state.
+    /// @param[in] mode Transformation mode (Robot vs Jet vs Morph).
+    /// @param[in] facing Direction mecha is facing (Left vs Right).
+    /// @param[in] moving true if traversing horizontally.
+    /// @param[in] inAir true if jumping or in flight.
+    /// @param[in] crouching true if tucked in crouch stance.
+    /// @param[in] laserActive true if auto-aiming laser is actively firing.
+    /// @param[in] aimAngle Elevation angle in radians if laser is active.
+    /// @param[in] vel Current velocity vector (dx, dy).
+    /// @param[in] morphProgress Transformation progress [0.0f, 1.0f].
+    /// @param[in] shieldActive true if shield barrier is active.
+    /// @return Strongly-typed SpriteId for authentic EGA mecha frame.
+    [[nodiscard]] SpriteId currentEgaMechaSprite(TransformMode mode, FacingDirection facing, bool moving, bool inAir,
+        bool crouching, bool laserActive, float aimAngle, Velocity vel, float morphProgress,
+        bool shieldActive) const noexcept;
+
     /// @brief Query active robot walk frame index (0, 1, or 2).
     /// @return Frame index.
     [[nodiscard]] constexpr std::uint8_t walkFrameIndex() const noexcept
     {
         return walkIndex_;
+    }
+
+    /// @brief Query active 8-frame walk index (0..7).
+    /// @return Frame index [0..7].
+    [[nodiscard]] constexpr std::uint8_t walk8Index() const noexcept
+    {
+        return walkIndex8_;
     }
 
     /// @brief Query active exhaust frame index (0 or 1).
@@ -77,9 +101,11 @@ public:
 
 private:
     float walkTimer_ { 0.0f };
+    float walkTimer8_ { 0.0f };
     float exhaustTimer_ { 0.0f };
     float enemyTimer_ { 0.0f };
     std::uint8_t walkIndex_ { 0U };
+    std::uint8_t walkIndex8_ { 0U };
     std::uint8_t exhaustIndex_ { 0U };
     std::uint8_t enemyIndex_ { 0U };
 };

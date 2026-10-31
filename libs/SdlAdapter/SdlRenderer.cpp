@@ -290,9 +290,29 @@ void SdlRenderer::drawSprite(const ShooterCore::RenderCommand& cmd) noexcept
     if (atlas_.isLoaded()) {
         const SDL_Rect srcRect { atlas_.getSourceRect(cmd.sprite) };
         if (srcRect.w > 0 && srcRect.h > 0) {
-            const SDL_Rect dstRect { toIntClamped(x), toIntClamped(y), srcRect.w, srcRect.h };
-            const SDL_RendererFlip flip { (cmd.facing == ShooterCore::FacingDirection::Left) ? SDL_FLIP_HORIZONTAL
-                                                                                             : SDL_FLIP_NONE };
+            float drawX { x };
+            float drawY { y };
+            if (srcRect.w == 48) {
+                if (ShooterCore::isEgaMechaJet(cmd.sprite)) {
+                    drawX -= 8.0f;
+                    drawY -= 8.0f;
+                } else if (ShooterCore::isEgaMechaRobot(cmd.sprite)) {
+                    drawX -= 16.0f;
+                }
+            }
+
+            const SDL_Rect dstRect { toIntClamped(drawX), toIntClamped(drawY), srcRect.w, srcRect.h };
+            SDL_RendererFlip flip { SDL_FLIP_NONE };
+            if (ShooterCore::isEgaMechaSprite(cmd.sprite)) {
+                const std::uint8_t frame { ShooterCore::egaMechaFrameIndex(cmd.sprite) };
+                const bool isNativeLeft { (frame >= 8U && frame <= 15U) || (frame >= 24U && frame <= 31U) };
+                if (!isNativeLeft && cmd.facing == ShooterCore::FacingDirection::Left) {
+                    flip = SDL_FLIP_HORIZONTAL;
+                }
+            } else if (cmd.facing == ShooterCore::FacingDirection::Left) {
+                flip = SDL_FLIP_HORIZONTAL;
+            }
+
             (void)SDL_RenderCopyEx(renderer_, atlas_.getTexture(), &srcRect, &dstRect,
                 static_cast<double>(cmd.rotationDegrees), nullptr, flip);
             return;

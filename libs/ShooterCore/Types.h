@@ -463,8 +463,74 @@ enum class SpriteId : std::uint16_t {
     CanisterShield = 64U,
     EnemyInterceptor = 65U,
     EnemyTurretCeiling = 66U,
-    EnemyBulletHostile = 67U
+    EnemyBulletHostile = 67U,
+    EgaMechaFrameBase = 100U,
+    EgaMechaFrameMax = 187U
 };
+
+/// @brief Map authentic EGA mecha frame index [0..87] to strongly-typed SpriteId.
+/// @param[in] frameIndex Zero-based frame index from EGAROBOT.BIN.
+/// @return Valid SpriteId within EgaMechaFrameBase..EgaMechaFrameMax.
+[[nodiscard]] constexpr SpriteId toEgaMechaSpriteId(std::uint8_t frameIndex) noexcept
+{
+    const auto safeIndex { static_cast<std::uint16_t>(frameIndex < 88U ? frameIndex : 0U) };
+    return static_cast<SpriteId>(static_cast<std::uint16_t>(SpriteId::EgaMechaFrameBase) + safeIndex);
+}
+
+/// @brief Determine if a sprite identifier represents an authentic EGA mecha frame.
+/// @param[in] id Sprite identifier to test.
+/// @return true if sprite belongs to EgaMechaFrameBase..EgaMechaFrameMax range.
+[[nodiscard]] constexpr bool isEgaMechaSprite(SpriteId id) noexcept
+{
+    const auto val { static_cast<std::uint16_t>(id) };
+    return val >= static_cast<std::uint16_t>(SpriteId::EgaMechaFrameBase)
+        && val <= static_cast<std::uint16_t>(SpriteId::EgaMechaFrameMax);
+}
+
+/// @brief Extract zero-based authentic EGA frame index from SpriteId.
+/// @param[in] id Sprite identifier.
+/// @return Zero-based frame index [0..87] or 0 if not an EGA mecha sprite.
+[[nodiscard]] constexpr std::uint8_t egaMechaFrameIndex(SpriteId id) noexcept
+{
+    if (!isEgaMechaSprite(id)) {
+        return 0U;
+    }
+    return static_cast<std::uint8_t>(
+        static_cast<std::uint16_t>(id) - static_cast<std::uint16_t>(SpriteId::EgaMechaFrameBase));
+}
+
+/// @brief Determine if a sprite belongs to Jet mode kinematics and flight framing.
+/// @param[in] id Sprite identifier.
+/// @return true if jet chassis, exhaust, or EGA jet flight frame.
+[[nodiscard]] constexpr bool isEgaMechaJet(SpriteId id) noexcept
+{
+    if (id == SpriteId::PlayerJet || id == SpriteId::PlayerJetExhaust1 || id == SpriteId::PlayerJetExhaust2) {
+        return true;
+    }
+    if (isEgaMechaSprite(id)) {
+        const std::uint8_t idx { egaMechaFrameIndex(id) };
+        return idx >= 56U && idx <= 79U;
+    }
+    return false;
+}
+
+/// @brief Determine if a sprite belongs to Robot or Morph kinematics and framing.
+/// @param[in] id Sprite identifier.
+/// @return true if robot stance, morphing step, or shield flash frame.
+[[nodiscard]] constexpr bool isEgaMechaRobot(SpriteId id) noexcept
+{
+    if (id == SpriteId::PlayerRobotIdle || id == SpriteId::PlayerRobotWalk1 || id == SpriteId::PlayerRobotWalk2
+        || id == SpriteId::PlayerRobotWalk3 || id == SpriteId::PlayerRobotJump || id == SpriteId::PlayerRobotCrouch
+        || id == SpriteId::PlayerMorph1 || id == SpriteId::PlayerMorph2 || id == SpriteId::PlayerMorph3
+        || id == SpriteId::PlayerTransforming) {
+        return true;
+    }
+    if (isEgaMechaSprite(id)) {
+        const std::uint8_t idx { egaMechaFrameIndex(id) };
+        return (idx < 56U) || (idx >= 80U);
+    }
+    return false;
+}
 
 /// @brief Sound effect identifier for presentation audio playback.
 enum class SoundEffectId : std::uint8_t {
