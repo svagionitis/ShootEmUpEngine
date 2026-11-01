@@ -311,6 +311,7 @@ private:
     bool isAlive_ { true };
     bool playerCrouch_ { false };
     bool prevCycleInput_ { false };
+    bool prevTransformInput_ { false };
 };
 
 } // namespace ShooterCore

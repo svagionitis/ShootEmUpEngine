@@ -508,7 +508,30 @@ bool SpriteAtlas::loadEgaRobot(std::uint32_t* pixelBuffer) noexcept
             const std::uint32_t* srcFrame { decoded.data() + i * (48U * 32U) };
             for (int dy { 0 }; dy < 32; ++dy) {
                 for (int dx { 0 }; dx < 48; ++dx) {
-                    putPixel(pixelBuffer, kAtlasWidth, dstX + dx, dstY + dy, srcFrame[dy * 48 + dx]);
+                    std::uint32_t pixel { srcFrame[dy * 48 + dx] };
+                    if (pixel != 0U) {
+                        // Colorize authentic mecha frame with distinct EGA palette
+                        if (dy <= 2) {
+                            pixel = kColorWhite; // Helmet crest
+                        } else if (dy <= 5) {
+                            pixel = (dx >= 18 && dx <= 30) ? kColorLightCyan : kColorLightBlue; // Glowing visor
+                        } else if (dy <= 7) {
+                            pixel = (dx >= 20 && dx <= 28) ? kColorDarkGray : kColorLightBlue; // Chin / rebreather
+                        } else if (dy <= 11) {
+                            pixel = (dx >= 18 && dx <= 26) ? kColorWhite : kColorLightBlue; // Cockpit hatch
+                        } else if (dy <= 14) {
+                            pixel = (dx >= 20 && dx <= 26) ? kColorBrightRed : kColorLightBlue; // Chest power core
+                        } else if (dy <= 17) {
+                            pixel = kColorLightBlue; // Armor plate
+                        } else if (dy <= 19) {
+                            pixel = kColorDarkGray; // Belt / hip joints
+                        } else if (dy <= 27) {
+                            pixel = kColorLightBlue; // Legs
+                        } else {
+                            pixel = (dx >= 18 && dx <= 30) ? kColorYellow : kColorDarkGray; // Thrusters & boots
+                        }
+                    }
+                    putPixel(pixelBuffer, kAtlasWidth, dstX + dx, dstY + dy, pixel);
                 }
             }
         }

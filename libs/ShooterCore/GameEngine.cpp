@@ -58,6 +58,7 @@ void GameEngine::initLevel(const TileMap& map, WorldPos playerSpawn) noexcept
     renderQueue_.clear();
     audioQueue_.clear();
     prevCycleInput_ = false;
+    prevTransformInput_ = false;
 
     playerPos_ = playerSpawn;
     playerVel_ = Velocity { 0.0f, 0.0f };
@@ -116,7 +117,7 @@ void GameEngine::updateInput(DeltaTime dt, EngineInput input) noexcept
 {
     playerCrouch_ = input.isDown() && (transformSys_.mode() == TransformMode::Robot);
 
-    if (input.isTransform()) {
+    if (input.isTransform() && !prevTransformInput_) {
         const TransformResult res { transformSys_.requestTransform(playerPos_, map_) };
         if (res == TransformResult::Success) {
             if (transformSys_.mode() == TransformMode::TransformingToJet) {
@@ -126,6 +127,7 @@ void GameEngine::updateInput(DeltaTime dt, EngineInput input) noexcept
             }
         }
     }
+    prevTransformInput_ = input.isTransform();
 
     if (input.isCycleWeapon() && !prevCycleInput_) {
         secondaryArsenal_.cycleWeapon();
@@ -505,8 +507,8 @@ void GameEngine::emitCommands() noexcept
     const SpriteId playerSpr { anim_.currentEgaMechaSprite(transformSys_.mode(), playerFacing_, isMoving, !onGround_,
         playerCrouch_, isLaserActive, aimAngle, playerVel_, morphProgress, isShieldActive) };
 
-    if (transformSys_.mode() == TransformMode::Jet && !isEgaMechaSprite(playerSpr)) {
-        // Emit animated afterburner exhaust for procedural fallback
+    if (transformSys_.mode() == TransformMode::Jet) {
+        // Emit animated afterburner exhaust
         const SpriteId exhaustSpr { anim_.currentJetExhaust() };
         const float exOffset { (playerFacing_ == FacingDirection::Left) ? 16.0f : -24.0f };
         renderQueue_.pushSprite(exhaustSpr, WorldPos { playerPos_.x + exOffset, playerPos_.y }, playerFacing_, 9U);

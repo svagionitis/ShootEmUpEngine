@@ -58,8 +58,6 @@ int main(int argc, char* argv[])
     if (!FLAGS_mute) {
         if (!audio.init()) {
             LOG(WARNING) << "Audio device could not be opened; continuing without sound.";
-        } else {
-            audio.playMusic(ShooterCore::MusicTrackId::MoonlightSonata);
         }
     }
 
@@ -68,6 +66,7 @@ int main(int argc, char* argv[])
     ThexderGame::GameState game;
     game.setGodMode(FLAGS_godmode);
     game.setScreenShakeEnabled(FLAGS_screen_shake);
+    game.setMode(ThexderGame::GameStateMode::Playing);
 
     ShooterCore::RenderCommandQueue frameQueue;
 

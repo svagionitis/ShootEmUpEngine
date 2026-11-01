@@ -5,16 +5,11 @@
 
 #include <algorithm>
 
-#include "EgaBugLoader.h"
 #include "EngineInput.h"
 #include "EntitySpawner.h"
 #include "GameEngine.h"
-#include "HudOverlay.h"
 #include "Level1Map.h"
-#include "ProceduralSprites.h"
 #include "RenderCommandQueue.h"
-#include "SarArchiveReader.h"
-#include "SarStageLoader.h"
 #include "TileMap.h"
 #include "Types.h"
 
@@ -50,46 +45,24 @@ void GameState::resetGame() noexcept
     stateTimer_ = 0.0f;
     warningTimer_ = 0.0f;
 
-    // Load authentic Firehawk Stage 1 Zone 1 (KM11 Earth Orbit Base) from RES1.SAR
-    SdlAdapter::SarArchiveReader sarReader;
-    bool stageLoaded { false };
-    if (sarReader.open("assets/firehawk/RES1.IX", "assets/firehawk/RES1.SAR")) {
-        stageLoaded = SdlAdapter::SarStageLoader::loadStageZone(sarReader, 1U, 1U, map_);
-        sarReader.close();
+    // Clear map completely of any background/obstacles
+    for (std::uint32_t r { 0U }; r < map_.height(); ++r) {
+        for (std::uint32_t c { 0U }; c < map_.width(); ++c) {
+            map_.setTile(ShooterCore::TileCoord { c, r }, ShooterCore::TileType::Empty);
+        }
     }
 
-    ShooterCore::WorldPos spawnPos { Level1Map::getPlayerSpawn() };
-    if (stageLoaded) {
-        // Firehawk Stage 1 Zone 1 orbital docking bay spawn position
-        spawnPos = ShooterCore::WorldPos { 48.0f, 64.0f };
-        exitPortal_ = ShooterCore::WorldPos { 120.0f * 16.0f, 14.0f * 16.0f };
-    } else {
-        Level1Map::loadFromBinary(map_);
-        exitPortal_ = Level1Map::getExitPortal();
+    // Set a solid floor row across the map so the robot can stand, walk, and jump without falling into void
+    constexpr std::uint32_t kFloorRow { 10U };
+    for (std::uint32_t c { 0U }; c < map_.width(); ++c) {
+        map_.setTile(ShooterCore::TileCoord { c, kFloorRow }, ShooterCore::TileType::SolidWall);
     }
+
+    // Position player centered in the screen on the floor
+    const ShooterCore::WorldPos spawnPos { 152.0f, static_cast<float>(kFloorRow) * 16.0f };
+    exitPortal_ = ShooterCore::WorldPos { 2000.0f, 2000.0f };
 
     engine_.initLevel(map_, spawnPos);
-    spawner_.initLevel1Nests();
-
-    // Register authentic alien nests from BUGDB01.BIN with fallback
-    auto& nestMgr { engine_.getNestManager() };
-    const std::size_t loadedNests { SdlAdapter::EgaBugLoader::loadBugDb("assets/thexder/BUGDB01.BIN", nestMgr) };
-    if (loadedNests == 0U) {
-        nestMgr.addNest(ShooterCore::WorldPos { 280.0f, 140.0f }, 80U, 4.0f);
-        nestMgr.addNest(ShooterCore::WorldPos { 600.0f, 100.0f }, 80U, 3.5f);
-        nestMgr.addNest(ShooterCore::WorldPos { 900.0f, 180.0f }, 80U, 3.0f);
-        nestMgr.addNest(ShooterCore::WorldPos { 1200.0f, 120.0f }, 80U, 2.5f);
-    }
-
-    // Seed Tactical Ceiling Turrets and Wall Crawlers
-    engine_.spawnEnemy(ShooterCore::EntityType::CeilingTurret, ShooterCore::WorldPos { 400.0f, 32.0f },
-        ShooterCore::Hitbox { ShooterCore::WorldPos { 392.0f, 28.0f }, ShooterCore::WorldPos { 408.0f, 44.0f } }, 30U);
-    engine_.spawnEnemy(ShooterCore::EntityType::CeilingTurret, ShooterCore::WorldPos { 800.0f, 32.0f },
-        ShooterCore::Hitbox { ShooterCore::WorldPos { 792.0f, 28.0f }, ShooterCore::WorldPos { 808.0f, 44.0f } }, 30U);
-
-    engine_.spawnEnemy(ShooterCore::EntityType::WallCrawler, ShooterCore::WorldPos { 350.0f, 192.0f },
-        ShooterCore::Hitbox { ShooterCore::WorldPos { 342.0f, 184.0f }, ShooterCore::WorldPos { 358.0f, 200.0f } },
-        20U);
 
     updateCamera(engine_.getPlayerPos());
 }
@@ -101,11 +74,9 @@ void GameState::step(ShooterCore::DeltaTime dt, ShooterCore::EngineInput input) 
 
     switch (mode_) {
     case GameStateMode::Title:
-        if (input.isFire() || input.isJump()) {
-            resetGame();
-            mode_ = GameStateMode::Playing;
-        }
-        break;
+        resetGame();
+        mode_ = GameStateMode::Playing;
+        [[fallthrough]];
 
     case GameStateMode::Playing: {
         engine_.step(dt, input);
@@ -202,34 +173,7 @@ void GameState::buildRenderQueue(ShooterCore::RenderCommandQueue& outQueue) noex
 {
     outQueue.clear();
 
-    if (mode_ == GameStateMode::Title) {
-        ProceduralSprites::drawTitleLogo(outQueue, 50.0f, 30.0f);
-        HudOverlay::drawText(outQueue, "THEXDER", 112.0f, 44.0f, 2U, ShooterCore::ColorRgba { 255U, 215U, 0U, 255U });
-        HudOverlay::drawText(
-            outQueue, "LEVEL 1 - CAVERN SYSTEM", 76.0f, 96.0f, 1U, ShooterCore::ColorRgba { 40U, 220U, 255U, 255U });
-
-        HudOverlay::drawText(
-            outQueue, "PILOT CONTROLS:", 60.0f, 120.0f, 1U, ShooterCore::ColorRgba { 255U, 215U, 0U, 255U });
-        HudOverlay::drawText(
-            outQueue, "ARROWS: MOVE / FLY JET", 70.0f, 134.0f, 1U, ShooterCore::ColorRgba { 230U, 235U, 255U, 255U });
-        HudOverlay::drawText(outQueue, "SPACE:  JUMP / JET THRUST", 70.0f, 146.0f, 1U,
-            ShooterCore::ColorRgba { 230U, 235U, 255U, 255U });
-        HudOverlay::drawText(
-            outQueue, "X:      AUTO-AIM LASER", 70.0f, 158.0f, 1U, ShooterCore::ColorRgba { 230U, 235U, 255U, 255U });
-        HudOverlay::drawText(
-            outQueue, "C:      SHIELD BARRIER", 70.0f, 170.0f, 1U, ShooterCore::ColorRgba { 230U, 235U, 255U, 255U });
-        HudOverlay::drawText(outQueue, "TAB:    TRANSFORM ROBOT/JET", 70.0f, 182.0f, 1U,
-            ShooterCore::ColorRgba { 230U, 235U, 255U, 255U });
-
-        const auto blink { static_cast<std::uint32_t>(warningTimer_ * 2.0f) };
-        if ((blink % 2U) == 0U) {
-            HudOverlay::drawText(
-                outQueue, "PRESS FIRE TO COMMENCE", 70.0f, 210.0f, 1U, ShooterCore::ColorRgba { 255U, 70U, 60U, 255U });
-        }
-        return;
-    }
-
-    // 1. World draw commands translated to screen coordinates with camera trauma shake
+    // Isolated robot diagnostic mode: remove intro and all background, leave only the robot
     const ShooterCore::WorldPos effectiveCam { screenShakeEnabled_ ? engine_.getCameraSystem().effectivePosition()
                                                                    : camera_.pos };
 
@@ -239,18 +183,15 @@ void GameState::buildRenderQueue(ShooterCore::RenderCommandQueue& outQueue) noex
     for (std::size_t i { 0U }; i < wcmdCount; ++i) {
         const ShooterCore::RenderCommand& cmd { wq.get(i) };
 
-        if (cmd.type == ShooterCore::RenderCommandType::DrawTile) {
-            const float sx { cmd.pos.x - effectiveCam.x };
-            const float sy { cmd.pos.y - effectiveCam.y };
-            if (sx >= -16.0f && sx <= kViewWidth && sy >= -16.0f && sy <= kViewHeight) {
-                (void)outQueue.pushTile(cmd.tileType, ShooterCore::WorldPos { sx, sy }, cmd.layer);
-            }
-        } else if (cmd.type == ShooterCore::RenderCommandType::DrawSprite) {
-            const float sx { cmd.pos.x - effectiveCam.x };
-            const float sy { cmd.pos.y - effectiveCam.y };
-            if (sx >= -48.0f && sx <= kViewWidth + 32.0f && sy >= -48.0f && sy <= kViewHeight + 32.0f) {
-                (void)outQueue.pushSprite(
-                    cmd.sprite, ShooterCore::WorldPos { sx, sy }, cmd.facing, cmd.layer, cmd.rotationDegrees);
+        // Only emit player robot craft sprites (layers 9..10), beam, and shield
+        if (cmd.type == ShooterCore::RenderCommandType::DrawSprite) {
+            if (cmd.layer >= 9U && cmd.layer <= 10U) {
+                const float sx { cmd.pos.x - effectiveCam.x };
+                const float sy { cmd.pos.y - effectiveCam.y };
+                if (sx >= -48.0f && sx <= kViewWidth + 32.0f && sy >= -48.0f && sy <= kViewHeight + 32.0f) {
+                    (void)outQueue.pushSprite(
+                        cmd.sprite, ShooterCore::WorldPos { sx, sy }, cmd.facing, cmd.layer, cmd.rotationDegrees);
+                }
             }
         } else if (cmd.type == ShooterCore::RenderCommandType::DrawBeam) {
             const float sx0 { cmd.pos.x - effectiveCam.x };
@@ -267,55 +208,6 @@ void GameState::buildRenderQueue(ShooterCore::RenderCommandQueue& outQueue) noex
             }
         }
     }
-
-    // 2. Generator nests
-    for (std::size_t i { 0U }; i < spawner_.nestCount(); ++i) {
-        const SpawnerNode& nest { spawner_.getNest(i) };
-        const float sx { nest.pos.x - effectiveCam.x };
-        const float sy { nest.pos.y - effectiveCam.y };
-        if (sx >= -32.0f && sx <= kViewWidth && sy >= -32.0f && sy <= kViewHeight) {
-            const ShooterCore::SpriteId nestSpr { nest.destroyed ? ShooterCore::SpriteId::NestCoreDestroyed
-                                                                 : ShooterCore::SpriteId::NestCoreActive };
-            (void)outQueue.pushSprite(
-                nestSpr, ShooterCore::WorldPos { sx, sy }, ShooterCore::FacingDirection::Right, 2U);
-        }
-    }
-
-    // 3. Extraction Gate / Exit Portal
-    const float esx { exitPortal_.x - effectiveCam.x };
-    const float esy { exitPortal_.y - effectiveCam.y };
-    if (esx >= -32.0f && esx <= kViewWidth && esy >= -48.0f && esy <= kViewHeight) {
-        outQueue.pushBar(ShooterCore::WorldPos { esx, esy - 16.0f }, 16.0f, 32.0f, 1.0f,
-            ShooterCore::ColorRgba { 50U, 240U, 120U, 200U });
-    }
-
-    // 4. State overlays
-    if (mode_ == GameStateMode::Paused) {
-        outQueue.pushBar(
-            ShooterCore::WorldPos { 0.0f, 0.0f }, 320.0f, 240.0f, 1.0f, ShooterCore::ColorRgba { 0U, 0U, 0U, 140U });
-        HudOverlay::drawText(outQueue, "PAUSED", 136.0f, 114.0f, 1U, ShooterCore::ColorRgba { 255U, 215U, 0U, 255U });
-    } else if (mode_ == GameStateMode::GameOver) {
-        ProceduralSprites::drawGameOver(outQueue, 70.0f, 102.0f);
-        HudOverlay::drawText(
-            outQueue, "MISSION FAILED", 100.0f, 110.0f, 1U, ShooterCore::ColorRgba { 255U, 60U, 60U, 255U });
-        HudOverlay::drawText(
-            outQueue, "ENERGY DEPLETED", 94.0f, 122.0f, 1U, ShooterCore::ColorRgba { 255U, 200U, 200U, 255U });
-    } else if (mode_ == GameStateMode::LevelComplete) {
-        ProceduralSprites::drawVictory(outQueue, 60.0f, 100.0f);
-        HudOverlay::drawText(
-            outQueue, "LEVEL 1 CLEARED!", 96.0f, 110.0f, 1U, ShooterCore::ColorRgba { 255U, 215U, 0U, 255U });
-        HudOverlay::drawText(
-            outQueue, "EXTRACTION COMPLETE", 80.0f, 122.0f, 1U, ShooterCore::ColorRgba { 255U, 255U, 255U, 255U });
-    }
-
-    // 5. Screen-space HUD overlay
-    const ShooterCore::ShieldGauge shieldGauge { static_cast<std::uint8_t>(
-        engine_.getWeaponSystem().isShieldActive() ? 100U : 0U) };
-    const auto& arsenal { engine_.getSecondaryArsenal() };
-    const std::uint8_t secAmmo { arsenal.currentAmmo().count() };
-
-    hud_.renderHud(outQueue, engine_.getPlayerEnergy(), shieldGauge, score_, hiScore_, engine_.getPlayerMode(),
-        warningTimer_, arsenal.activeWeapon(), secAmmo);
 }
 
 } // namespace ThexderGame

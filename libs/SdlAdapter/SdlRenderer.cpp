@@ -294,22 +294,20 @@ void SdlRenderer::drawSprite(const ShooterCore::RenderCommand& cmd) noexcept
             float drawY { y };
             if (srcRect.w == 48 && atlas_.isEgaRobotLoaded()) {
                 if (ShooterCore::isEgaMechaJet(cmd.sprite)) {
-                    drawX -= 8.0f;
-                    drawY -= 8.0f;
+                    drawX -= 24.0f;
+                    drawY -= 16.0f;
                 } else if (ShooterCore::isEgaMechaRobot(cmd.sprite)) {
-                    drawX -= 16.0f;
+                    drawX -= 24.0f;
+                    drawY -= 32.0f;
                 }
+            } else {
+                drawX = x - (static_cast<float>(srcRect.w) * 0.5f);
+                drawY = y - static_cast<float>(srcRect.h);
             }
 
             const SDL_Rect dstRect { toIntClamped(drawX), toIntClamped(drawY), srcRect.w, srcRect.h };
             SDL_RendererFlip flip { SDL_FLIP_NONE };
-            if (ShooterCore::isEgaMechaSprite(cmd.sprite)) {
-                const std::uint8_t frame { ShooterCore::egaMechaFrameIndex(cmd.sprite) };
-                const bool isNativeLeft { (frame >= 8U && frame <= 15U) || (frame >= 24U && frame <= 31U) };
-                if (!isNativeLeft && cmd.facing == ShooterCore::FacingDirection::Left) {
-                    flip = SDL_FLIP_HORIZONTAL;
-                }
-            } else if (cmd.facing == ShooterCore::FacingDirection::Left) {
+            if (cmd.facing == ShooterCore::FacingDirection::Left) {
                 flip = SDL_FLIP_HORIZONTAL;
             }
 
